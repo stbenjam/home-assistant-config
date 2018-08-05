@@ -1,0 +1,85 @@
+script.spotify_music:
+  friendly_name: Play
+  icon: mdi:play
+sensor.season:
+  icon: mdi:beach
+sensor.dark_sky_summary:
+  friendly_name: Current Weather
+sensor.solar_month:
+  icon: mdi:calendar-blank
+sensor.solar_today:
+  icon: mdi:calendar-today
+sensor.solar_live:
+  icon: mdi:flash
+sensor.speedtest_ping:
+  friendly_name: Ping
+  icon: mdi:pulse
+sensor.speedtest_download:
+  friendly_name: Download
+  icon: mdi:arrow-down-bold
+sensor.speedtest_upload:
+  friendly_name: Upload
+  icon: mdi:arrow-up-bold
+switch.new_york:
+  icon: mdi:city
+switch.air_filter:
+  icon: mdi:filter
+sensor.basement_nest_protect_battery_health:
+  friendly_name: 'Nest Battery : Basement'
+  icon: mdi:battery
+light.dining_room_main_lights:
+  friendly_name: Dining Room
+light.hallway_main_lights:
+  friendly_name: Hallway
+light.kitchen_main_lights:
+  friendly_name: Kitchen
+light.basement:
+  friendly_name: Basement
+sensor.hallway_nest_protect_battery_health:
+  friendly_name: "Nest Battery : Hallway"
+  icon: mdi:battery
+sensor.master_bedroom_nest_protect_battery_health:
+  friendly_name: "Nest Battery : Master Bedroom"
+  icon: mdi:battery
+sensor.basement_nest_protect_color_status:
+  icon: mdi:fire
+  friendly_name: Basement - Nest Protect
+sensor.hallway_nest_protect_color_status:
+  icon: mdi:fire
+  friendly_name: Hallway - Nest Protect
+sensor.master_bedroom_nest_protect_color_status:
+  icon: mdi:fire
+  friendly_name: Bedroom - Nest Protect
+sensor.hallway_thermostat_hvac_state:
+  friendly_name: HVAC
+  icon: mdi:fan
+light.office_floor_lamp:
+  friendly_name: Office
+switch.sunroom_main_lights:
+  friendly_name: Sunroom
+  icon: mdi:lightbulb
+switch.back_entry_sconces:
+  friendly_name: Side Entry Light
+  icon: mdi:lightbulb
+light.living_room_floor_lamp:
+  friendly_name: Living Room
+switch.rear_deck_deck_lights:
+  friendly_name: Rear Deck
+  icon: mdi:lightbulb
+switch.front_porch_overhead_light:
+  friendly_name: Side Deck
+  icon: mdi:lightbulb
+sensor.hallway_thermostat_humidity:
+  friendly_name: Hallway Humidity
+sensor.solaredge_live:
+  icon: mdi:weather-sunny
+sensor.solaredge_today:
+  icon: mdi:calendar-today
+lock.assa_abloy_unknown_type0004_idaa00_locked:
+  friendly_name: Front Door
+lock.assa_abloy_unknown_type0004_idaa00_locked_3:
+  friendly_name: Basement Door
+lock.schlage_be469_touchscreen_deadbolt_locked:
+  friendly_name: Side Door
+switch.living_room_tv:
+  icon: mdi:television-classic

@@ -1,0 +1,117 @@
+default_view:
+  name: Home
+  view: yes
+  entities: !include_dir_merge_list default_view
+
+controls:
+  name: Controls
+  view: yes
+  entities:
+    - group.locks
+    - group.bedroom
+    - group.basement
+    - group.interior
+    - group.exterior
+
+Music:
+  view: yes
+  entities:
+    - media_player.spotify
+    - group.spotify
+
+Solar:
+  view: yes
+  entities:
+    - group.solar_stats
+    - group.solar_misc
+    - sensor.solar_live
+    - history_graph.solar
+
+Advanced:
+  view: yes
+  entities:
+    - group.notifications
+    - group.misc
+    - group.batteries
+
+Notifications:
+  - automation.notify_when_home
+  - automation.notify_when_away
+
+Solar_Misc:
+    name: "Solar Misc"
+    view: no
+    entities:
+      - sun.sun
+      - sensor.season
+      - sensor.dark_sky_summary
+
+Solar_Stats:
+  name: "Solar Stats"
+  view: no
+  entities:
+    - sensor.solar_live
+    - sensor.solar_max
+    - sensor.solar_today
+    - sensor.solar_month
+
+Batteries:
+  - sensor.front_door_lock_battery
+  - sensor.side_door_lock_battery
+  - sensor.basement_door_lock_battery
+  - sensor.basement_nest_protect_battery_health
+  - sensor.hallway_nest_protect_battery_health
+  - sensor.master_bedroom_nest_protect_battery_health
+
+Misc:
+  - input_boolean.is_away
+  - input_boolean.guest_mode
+
+Thermostat:
+  - climate.hallway
+  - sensor.hallway_thermostat_humidity
+  - sensor.hallway_thermostat_hvac_state
+
+Basement:
+  - input_boolean.basement_tv
+  - light.basement
+
+Bedroom:
+  - light.bedroom
+  - switch.new_york
+  - switch.air_filter
+
+Interior:
+  - light.dining_room_main_lights
+  - light.kitchen_main_lights
+  - light.hallway_main_lights
+  - switch.sunroom_main_lights
+  - light.bathroom
+  - light.office_floor_lamp
+  - light.living_room_floor_lamp
+  - switch.living_room_tv
+
+Exterior:
+  - switch.back_entry_sconces
+  - switch.rear_deck_deck_lights
+  - switch.front_porch_overhead_light
+  - light.front_door_light
+
+Spotify:
+  - input_select.spotify_playlist
+  - input_select.spotify_source
+  - input_number.spotify_volume
+  - script.spotify_music
+
+Locks:
+  - lock.schlage_be469_touchscreen_deadbolt_locked
+  - lock.assa_abloy_unknown_type0004_idaa00_locked_3
+  - lock.assa_abloy_unknown_type0004_idaa00_locked
+
+Security:
+  - sensor.front_door_lock
+  - sensor.side_door_lock
+  - sensor.basement_door_lock
+  - sensor.hallway_nest_protect_color_status
+  - sensor.master_bedroom_nest_protect_color_status
+  - sensor.basement_nest_protect_color_status

@@ -1,0 +1,51 @@
+- alias: 'Basement TV'
+  trigger:
+    platform: state
+    entity_id: input_boolean.basement_tv
+  action:
+    - service: switch.turn_on
+      entity_id: switch.basement_tv_wol
+    - service_template: >
+        {% if states('input_boolean.basement_tv') == 'on' %}
+          rest_command.basement_tv_power_on
+        {% else %}
+          rest_command.basement_tv_power_off
+        {% endif %}
+
+# New York is the name of a light in our bedroom
+- alias: Turn New York Off Automatically
+  trigger:
+  - entity_id: switch.new_york
+    platform: state
+    from: 'off'
+    to: 'on'
+    for:
+      minutes: 30
+  condition: []
+  action:
+  - data:
+      entity_id: switch.new_york
+    service: switch.turn_off
+
+# Turn on some outside lights before sunset
+- alias: Outside Light - Sunset
+  trigger:
+    platform: sun
+    event: sunset
+    offset: "-00:45:00"
+  action:
+  - data:
+      entity_id:
+        - switch.front_porch_overhead_light
+    service: switch.turn_on
+
+- alias: Trash Day
+  trigger:
+    platform: state
+    entity_id: binary_sensor.trash
+    from: 'off'
+    to: 'on'
+  action:
+    - service: persistent_notification.create
+      data:
+        message: "Trash day is soon!"

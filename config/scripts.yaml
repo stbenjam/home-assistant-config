@@ -1,0 +1,25 @@
+spotify_music:
+  alias: Play selected spotify playlist
+  sequence:
+    - service: media_player.select_source
+      data_template:
+        entity_id: media_player.spotify
+        source: "{{ states('input_select.spotify_source') }}"
+    - service: media_player.volume_set
+      data:
+        entity_id: media_player.spotify
+        volume_level: "{{ states('input_number.spotify_volume') }}"
+    - service: media_player.play_media
+      data_template:
+        entity_id: media_player.spotify
+        media_content_type: playlist
+        media_content_id: >
+          {% if is_state("input_select.spotify_playlist", "Top 50") %} <PLAYLIST ID>
+          {% elif is_state("input_select.spotify_playlist", "Country Favs!") %} <PLAYLIST ID>
+          {% elif is_state("input_select.spotify_playlist", "Have a Great Day") %} <PLAYLIST ID>
+          {% endif %}
+    - service: media_player.shuffle_set
+      data:
+        entity_id: media_player.spotify
+        shuffle: 'true'
+

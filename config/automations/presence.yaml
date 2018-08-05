@@ -1,0 +1,155 @@
+# Home Boolean
+- alias: 'Set Away Mode'
+  trigger:
+    platform: state
+    entity_id: group.all_devices
+    to: 'not_home'
+  # Do not set this if GUEST MODE is enabled
+  condition:
+    condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  action:
+    service: input_boolean.turn_on
+    entity_id: input_boolean.is_away
+
+- alias: 'Set Home Mode'
+  trigger:
+    platform: state
+    entity_id: group.all_devices
+    to: 'home'
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.is_away
+
+- alias: 'Notify When Away'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'on'
+  action:
+    service: notify.notify
+    data_template:
+      message: "Home set to away."
+
+- alias: 'Notify When Home'
+  trigger:
+    platform: state
+    entity_id: !include ../default_view/people.yaml
+    to: 'home'
+  action:
+    service_template: >
+      {% if trigger.to_state.attributes.friendly_name == "Felipe" %}
+        notify.ios_stephen
+      {% elif trigger.to_state.attributes.friendly_name == "Stephen" %}
+        notify.ios_iphone
+      {% else %}
+        notify.notify
+      {% endif %}
+    data_template:
+      message: >
+        {{ trigger.to_state.attributes.friendly_name }} is home!
+
+# AWAY:
+- alias: 'Away Mode - Lights'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'on'
+  action:
+    service: light.turn_off
+    entity_id: group.all_lights
+
+- alias: 'Away Mode - Switches'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'on'
+  action:
+    service: switch.turn_off
+    entity_id: group.all_switches
+
+- alias: 'Away Mode - Nest'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'on'
+  action:
+    service: climate.set_away_mode
+    data:
+      entity_id: climate.hallway
+      away_mode: true
+
+- alias: 'Away Mode - TV'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'on'
+  action:
+    service: rest_command.basement_tv_power_off
+
+# HOME:
+- alias: 'Home Mode - Nest'
+  trigger:
+    platform: state
+    entity_id: input_boolean.is_away
+    to: 'off'
+  action:
+    service: climate.set_away_mode
+    data:
+      entity_id: climate.hallway
+      away_mode: false
+
+- alias: 'Home Mode - Lights'
+  trigger:
+    platform: state
+    entity_id: !include ../default_view/people.yaml
+    to: 'home'
+  condition:
+    condition: sun
+    after: sunset
+    before_offset: "-01:00:00"
+  action:
+    service: light.turn_on
+    data:
+      entity_id: light.kitchen_main_lights
+
+- alias: 'Office When Stephen Not Home'
+  trigger:
+  - entity_id: device_tracker.stephensiphone
+    platform: state
+    from: 'home'
+    to: 'not_home'
+  condition: []
+  action:
+  - data:
+      entity_id: light.office_floor_lamp
+    service: light.turn_off
+
+# Security
+- alias: 'Away Mode - Lock Doors'
+  trigger:
+    - platform: state
+      entity_id: input_boolean.is_away
+      to: 'on'
+  action:
+    service: lock.lock
+    entity_id: group.all_locks
+
+- alias: 'Home Mode - Unlock Upon Arrival'
+  trigger:
+    - platform: state
+      entity_id: device_tracker.stephensiphone
+      from: 'not_home'
+      to: 'home'
+    - platform: state
+      entity_id: device_tracker.iphone
+      from: 'not_home'
+      to: 'home'
+  action:
+    - service: lock.unlock
+      entity_id: lock.schlage_be469_touchscreen_deadbolt_locked
+  condition:
+    condition: state
+    entity_id: lock.schlage_be469_touchscreen_deadbolt_locked
+    state: 'locked'
