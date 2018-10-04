@@ -1,0 +1,71 @@
+- alias: 'Grid Out - Persistent'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.grid_status
+    to: 'off'
+  action:
+    - service: persistent_notification.create
+      data:
+        message: "GRID IS OFFLINE"
+
+- alias: 'Grid Out - Notification'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.grid_status
+    to: 'off'
+  action:
+    service: notify.notify
+    data_template:
+      message: "Power outage detected! Now operating on battery/solar only. Conserve power!"
+
+- alias: 'Grid Out - Energy Conservation'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.grid_status
+    to: 'off'
+  action:
+    service: switch.turn_off
+    data_template:
+      entity_id: switch.sunroom_heater
+
+- alias: 'Notify When Grid is Restored'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.grid_status
+    to: 'on'
+  action:
+    service: notify.notify
+    data_template:
+      message: "Power is restored."
+
+# reset solar peak at midnight
+- alias: "Reset Solar Max"
+  trigger:
+    platform: time
+    hours: 0
+    minutes: 0
+    seconds: 0
+  action:
+    service: input_number.set_value
+    data:
+      entity_id: input_number.solar_max
+      value: 0
+
+# monitor the solar peak and keep track of it
+- alias: 'Set Solar Max'
+  trigger:
+    platform: state
+    entity_id: sensor.solar_live
+  condition:
+    - condition: template
+      value_template: >
+        {% if (states('sensor.solar_live') | float) > (states('input_number.solar_max') | float) %}
+          true
+        {% else %}
+          false
+        {% endif %}
+  action:
+    service: input_number.set_value
+    data_template:
+      entity_id: input_number.solar_max
+      value: "{{ states('sensor.solar_live') | float }}"

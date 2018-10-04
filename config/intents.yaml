@@ -1,5 +1,0 @@
-SolarStatusIntent:
-  speech:
-    type: plain
-    text: >
-      The current solar production is {{ states("sensor.solar_live") | round(1) }} kilowatts. It is {{ states("sensor.dark_sky_summary") }}. So far today, you've produced {{ states("sensor.solar_today") | round(0)}} kilowatt hours, with a peak production of {{ states("sensor.solar_max") | round(1) }} kilowatts. This month you've produced {{ states("sensor.solar_month") | round(0) }} kilowatt hours.

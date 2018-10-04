@@ -1,0 +1,77 @@
+- alias: Trash Day
+  trigger:
+    platform: state
+    entity_id: binary_sensor.trash
+    from: 'off'
+    to: 'on'
+  action:
+    - service: persistent_notification.create
+      data:
+        message: "Trash day is soon!"
+
+- alias: Trash Day - Input boolean
+  trigger:
+    platform: state
+    entity_id: binary_sensor.trash
+    from: 'off'
+    to: 'on'
+  action:
+    - service: input_boolean.turn_on
+      entity_id: input_boolean.take_out_trash
+
+- alias: Trash Day - Notification 7pm
+  trigger:
+    platform: time
+    hours: 19
+    minutes: 0
+    seconds: 0
+  condition:
+    condition: and
+    conditions:
+      - condition: template
+        value_template: "{{ now().weekday() == 3 }}"
+      - condition: state
+        entity_id: input_boolean.take_out_trash
+        state: 'on'
+  action:
+    service: notify.notify
+    data_template:
+      message: "It's time to take out the trash."
+
+- alias: Trash Day - Notification 9pm
+  trigger:
+    platform: time
+    hours: 21
+    minutes: 0
+    seconds: 0
+  condition:
+    condition: and
+    conditions:
+      - condition: template
+        value_template: "{{ now().weekday() == 3 }}"
+      - condition: state
+        entity_id: input_boolean.take_out_trash
+        state: 'on'
+  action:
+    service: notify.notify
+    data_template:
+      message: "It's time to take out the trash."
+
+- alias: Trash Day - Notification 5:30am
+  trigger:
+    platform: time
+    hours: 5 
+    minutes: 30
+    seconds: 0
+  condition:
+    condition: and
+    conditions:
+      - condition: template
+        value_template: "{{ now().weekday() == 4 }}"
+      - condition: state
+        entity_id: input_boolean.take_out_trash
+        state: 'on'
+  action:
+    service: notify.notify
+    data_template:
+      message: "It's time to take out the trash."

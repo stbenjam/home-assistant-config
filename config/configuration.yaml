@@ -35,7 +35,6 @@ ios:
 logbook:
 recorder:
   db_url: !secret db_url
-script: !include scripts.yaml
 shopping_list:
 sun:
 tts:
@@ -105,6 +104,78 @@ camera:
     name: Radar
 
 sensor:
+  # PowerWall Sensors
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/meters/aggregates
+    value_template: '{{ (value_json.site.instant_power | float / 1000) | round(2) }}'
+    name: 'Grid Power'
+    unit_of_measurement: 'kW'
+    scan_interval: 60
+    verify_ssl: false
+    icon_template: mdi:grid
+
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/meters/aggregates
+    value_template: '{{ (value_json.solar.instant_power | float / 1000) | round(2) }}'
+    name: 'Solar Power'
+    unit_of_measurement: 'kW'
+    scan_interval: 60
+    verify_ssl: false
+    icon_template: mdi:weather-sunny
+
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/meters/aggregates
+    value_template: '{{ (value_json.battery.instant_power | float / 1000) | round(2) }}'
+    name: 'Powerwall Power'
+    unit_of_measurement: 'kW'
+    scan_interval: 60
+    verify_ssl: false
+    icon_template: >-
+      {%- if states('sensor.powerwall_power') | float > 0 %}
+      mdi:battery
+      {%- else %}
+      mdi:battery-charging
+      {%- endif %}
+
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/meters/aggregates
+    value_template: '{{ (value_json.load.instant_power | float / 1000) | round(2) }}'
+    name: 'Home Power'
+    unit_of_measurement: 'kW'
+    scan_interval: 60
+    verify_ssl: false
+
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/system_status/soe
+    value_template: '{{ (value_json.percentage | float | round(0)) }}'
+    name: 'Powerwall Battery'
+    unit_of_measurement: '%'
+    scan_interval: 60
+    verify_ssl: false
+    icon_template: >-
+      {%- set battery = states('sensor.powerwall_battery') | float %}
+      {%- if battery > 90 %}
+        mdi:battery
+      {%- elif battery > 80 %}
+        mdi:battery-90
+      {%- elif battery > 70 %}
+        mdi:battery-80
+      {%- elif battery > 60 %}
+        mdi:battery-70
+      {%- elif battery > 50 %}
+        mdi:battery-60
+      {%- elif battery > 40 %}
+        mdi:battery-50
+      {%- elif battery > 30 %}
+        mdi:battery-40
+      {%- elif battery > 20 %}
+        mdi:battery-30
+      {%- elif battery > 10 %}
+        mdi:battery-20
+      {%- else %}
+        mdi:battery-outline
+      {% endif %}
+
   # SolarEdge sensors, overview url should be:
   #   https://monitoringapi.solaredge.com/site/<SITE ID>/overview.json?api_key=<API_KEY>
   - platform: rest
@@ -402,27 +473,44 @@ sensor:
         entity_id: zwave.schlage_be469_touchscreen_deadbolt
 
 
-  # Traffic
-  - platform: waze_travel_time
-    name: "Harvard"
-    origin: <HOME>
-    destination: "7 Felton St, Cambridge, MA"
-    region: 'US'
-  - platform: waze_travel_time
-    name: "South Station"
-    origin: <HOME>
-    destination: "700 Atlantic Ave #2, Boston, MA 02110"
-    region: 'US'
-
-
 binary_sensor:
+  - platform: command_line
+    command:  "curl http://<TV IP>:8060/query/device-info 2>&1 | grep PowerOn > /dev/null 2>&1 && echo ON || echo OFF"
+    name: 'Basement TV'
+    command_timeout: 5
+
   - platform: template
-    # Trash day
     sensors:
+      # Trash day
       trash:
         friendly_name: "Trash Day"
         value_template: >-
           {{ now().weekday() == 3 or now().weekday() == 4 }}
+      # Bathroom Motion / Humidity
+      bathroom_motion:
+        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_alarm_level') | int > 0 }}"
+        friendly_name: "Bathroom Motion"
+        device_class: motion
+        entity_id: sensor.zooz_zse40_4in1_sensor_alarm_level
+      shower_on:
+        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_relative_humidity_2') | float - states('sensor.hallway_thermostat_humidity') | float > 15 }}"
+        friendly_name: "Shower On"
+        entity_id: sensor.zooz_zse40_4in1_sensor_relative_humidity_2
+
+  # PowerWall Grid Status:
+  - platform: rest
+    resource: https://<POWERWALL IP>/api/system_status/grid_status
+    verify_ssl: false
+    method: GET
+    name: Grid Status
+    scan_interval: 60
+    value_template: "{{ value_json.grid_status == 'SystemGridConnected' }}"
+
+weblink:
+  entities:
+    - name: Powerwall UI
+      url: https://<POWERWALL IP>/
+      icon: mdi:web
 
 input_number:
   solar_max:
@@ -430,31 +518,6 @@ input_number:
     min: 0.0
     max: 8.85
     unit_of_measurement: kW
-  spotify_volume:
-    name: Volume
-    icon: mdi:volume-high
-    min: 0
-    max: 1
-    step: 0.05
-
-input_select:
-  spotify_playlist:
-    name: 'Playlist'
-    options:
-      - "Top 50"
-      - "Country Favs!"
-      - "Have a Great Day"
-    icon: mdi:spotify
-  spotify_source:
-    name: 'Source'
-    options:
-      - Basement
-      - Kitchen Dot
-      - Bedroom
-      - Office
-      - Everywhere
-    initial: Bedroom
-    icon: mdi:speaker-wireless
 
 history_graph:
   solar:
@@ -462,11 +525,6 @@ history_graph:
     entities:
       - sensor.solar_live
     hours_to_show: 24
-
-media_player:
-  - platform: spotify
-    client_id: !secret spotify_client
-    client_secret: !secret spotify_secret
 
 scene:
   - name: Dinner
@@ -500,25 +558,13 @@ zwave:
   network_key: !secret zwave_key
   usb_path: /dev/ttyACM0
 
-alexa:
-  flash_briefings:
-    briefing:
-      - title: Home Overview
-        text: >
-          {% if is_state('sun.sun', 'above_horizon') %}The current solar production is {{ states("sensor.solar_live") }} kilowatts.  So far
-          {%- endif %}
-          today, you've produced {{ states("sensor.solar_today") }} kilowatt hours.
 
-          The H.V.A.C. is currently {{ states("sensor.hallway_thermostat_hvac_state") }}, with the temperature set to {{ states("sensor.hallway_thermostat_target") }} degrees.
-
-          {% if is_state("sensor.front_door_lock", "unlocked") %}
-          The front door is unlocked.
-          {% endif %}
-
-          {% if is_state("sensor.basement_door_lock", "unlocked") %}
-          The front door is unlocked.
-          {% endif %}
-
-          {% if is_state("sensor.side_door_lock", "unlocked") %}
-          The front door is unlocked.
-          {% endif %}
+nissan_leaf:
+    username: !secret nissan_username
+    password: !secret nissan_password
+    region: NNA
+    nissan_connect: true
+    update_interval: 30
+    update_interval_charging: 15
+    update_interval_climate: 5
+    force_miles: true

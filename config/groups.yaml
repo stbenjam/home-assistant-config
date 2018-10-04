@@ -7,25 +7,35 @@ controls:
   name: Controls
   view: yes
   entities:
-    - group.locks
-    - group.bedroom
     - group.basement
-    - group.interior
+    - group.bathroom
+    - group.bedroom
     - group.exterior
+    - group.hallway
+    - group.kitchen
+    - group.living_room
+    - group.locks
+    - group.office
+    - group.sunroom
 
-Music:
+Energy:
   view: yes
   entities:
-    - media_player.spotify
-    - group.spotify
-
-Solar:
-  view: yes
-  entities:
-    - group.solar_stats
+    - group.powerwall
+    - group.leaf
     - group.solar_misc
+    - group.solar_stats
     - sensor.solar_live
     - history_graph.solar
+
+Powerwall:
+  - weblink.powerwall_ui
+  - binary_sensor.grid_status
+  - sensor.powerwall_battery
+  - sensor.grid_power
+  - sensor.solar_power
+  - sensor.powerwall_power
+  - sensor.home_power
 
 Advanced:
   view: yes
@@ -33,6 +43,21 @@ Advanced:
     - group.notifications
     - group.misc
     - group.batteries
+    - group.bathroom_sensors
+
+Leaf:
+  name: Leaf
+  icon: mdi:car
+  control: hidden
+  entities:
+    - binary_sensor.leaf_plug_status
+    - sensor.leaf_charge
+    - sensor.leaf_charge_time_1
+    - sensor.leaf_charge_time_2
+    - sensor.leaf_range
+    - sensor.leaf_range_ac
+    - switch.leaf_charging_status
+    - switch.leaf_climate_control
 
 Notifications:
   - automation.notify_when_home
@@ -43,6 +68,8 @@ Solar_Misc:
     view: no
     entities:
       - sun.sun
+      - sensor.sunrise
+      - sensor.sunset
       - sensor.season
       - sensor.dark_sky_summary
 
@@ -62,6 +89,7 @@ Batteries:
   - sensor.basement_nest_protect_battery_health
   - sensor.hallway_nest_protect_battery_health
   - sensor.master_bedroom_nest_protect_battery_health
+  - sensor.bathroom_zooz_battery
 
 Misc:
   - input_boolean.is_away
@@ -72,36 +100,67 @@ Thermostat:
   - sensor.hallway_thermostat_humidity
   - sensor.hallway_thermostat_hvac_state
 
+Bathroom_Sensors:
+    name: "Bathroom"
+    view: no
+    entities:
+      - binary_sensor.bathroom_motion
+      - binary_sensor.shower_on
+      - sensor.zooz_zse40_4in1_sensor_temperature_2
+      - sensor.zooz_zse40_4in1_sensor_relative_humidity_2
+
 Basement:
   - input_boolean.basement_tv
-  - light.basement
+  - light.stairs
+  - light.la_luna
+
+Bathroom:
+  - light.main_bathroom_vanity_lights
+  - switch.main_bathroom_exhaust_fan
 
 Bedroom:
   - light.bedroom
   - switch.new_york
   - switch.air_filter
 
-Interior:
-  - light.dining_room_main_lights
-  - light.kitchen_main_lights
-  - light.hallway_main_lights
+Office:
+  name: "Office"
+  view: no
+  entities:
+    - light.office_floor_lamp
+
+Hallway:
+  name: "Hallway"
+  view: no
+  entities:
+    - light.hallway_main_lights
+
+Living_Room:
+  name: "Living Room"
+  view: no
+  control: hidden
+  entities:
+    - light.living_room_floor_lamp
+
+Kitchen:
+  name: "Kitchen"
+  view: no
+  control: hidden
+  entities:
+    - light.dining_room_main_lights
+    - light.kitchen_main_lights
+    - input_boolean.take_out_trash
+
+Sunroom:
   - switch.sunroom_main_lights
-  - light.bathroom
-  - light.office_floor_lamp
-  - light.living_room_floor_lamp
-  - switch.living_room_tv
+  - switch.sunroom_heater
+  - light.sunroom_star
 
 Exterior:
   - switch.back_entry_sconces
   - switch.rear_deck_deck_lights
   - switch.front_porch_overhead_light
   - light.front_door_light
-
-Spotify:
-  - input_select.spotify_playlist
-  - input_select.spotify_source
-  - input_number.spotify_volume
-  - script.spotify_music
 
 Locks:
   - lock.schlage_be469_touchscreen_deadbolt_locked

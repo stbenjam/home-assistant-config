@@ -1,16 +1,43 @@
-- alias: 'Basement TV'
+- alias: 'Basement TV Status'
+  trigger:
+    platform: state
+    entity_id: binary_sensor.basement_tv
+  action:
+    - service_template: >
+        {% if states('binary_sensor.basement_tv') == 'on' %}
+          input_boolean.turn_on
+        {% else %}
+          input_boolean.turn_off
+        {% endif %}
+      entity_id: input_boolean.basement_tv
+
+- alias: 'Basement TV On'
   trigger:
     platform: state
     entity_id: input_boolean.basement_tv
+    from: 'off'
+    to: 'on'
+  condition:
+    condition: state
+    entity_id: binary_sensor.basement_tv
+    state: 'off'
   action:
     - service: switch.turn_on
       entity_id: switch.basement_tv_wol
-    - service_template: >
-        {% if states('input_boolean.basement_tv') == 'on' %}
-          rest_command.basement_tv_power_on
-        {% else %}
-          rest_command.basement_tv_power_off
-        {% endif %}
+    - service: rest_command.basement_tv_power_on
+
+- alias: 'Basement TV Off'
+  trigger:
+    platform: state
+    entity_id: input_boolean.basement_tv
+    from: 'on'
+    to: 'off'
+  condition:
+    condition: state
+    entity_id: binary_sensor.basement_tv
+    state: 'on'
+  action:
+    - service: rest_command.basement_tv_power_off
 
 # New York is the name of a light in our bedroom
 - alias: Turn New York Off Automatically
