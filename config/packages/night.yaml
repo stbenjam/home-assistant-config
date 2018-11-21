@@ -1,0 +1,26 @@
+input_boolean:
+  night_mode:
+    name: Night Mode
+    icon: mdi:weather-night
+    initial: false
+
+automation:
+- alias: Night Mode - On 
+  trigger:
+    platform: time
+    at: '22:00:00'
+  action:
+  - data:
+      entity_id:
+        - input_boolean.night_mode 
+    service: input_boolean.turn_on
+
+- alias: Night Mode - Off 
+  trigger:
+    platform: time
+    at: '22:00:00'
+  action:
+  - data:
+      entity_id:
+        - input_boolean.night_mode 
+    service: input_boolean.turn_off

@@ -1,0 +1,281 @@
+# I have two different locks:
+#       - YRD-210
+#       - Schlage BE469
+#
+# This creates custom sensors that shows who unlocked a door based on the pin
+# code.
+
+
+sensor:
+  - platform: template
+    sensors:
+
+      # FRONT DOOR
+      front_door_lock:
+        value_template: >-
+          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type" %}
+          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            {%- if is_state(alarm_level_device, "0") -%}
+              Unlocked by Stephen
+            {%- elif is_state(alarm_level_device, "1") -%}
+              Unlocked by Felipe
+            {%- else -%}
+              Unlocked by User {{ alarm_level_device }} 
+            {%- endif %}
+          {%- elif is_state(alarm_type_device, "27") %}
+            Auto-Relocked
+          {%- elif is_state(alarm_type_device, "21") %}
+            Locked 
+          {%- elif is_state(alarm_type_device, "22") %}
+            Unlocked by Hand
+          {%- elif is_state(alarm_type_device, "24") %}
+            Locked
+          {%- elif is_state(alarm_type_device, "25") %}
+            Unlocked by App
+          {%- elif is_state(alarm_type_device, "122") %}
+            Code {{ states(alarm_level_device) }} updated!
+          {%- elif is_state(alarm_type_device, "161") %}
+            Tampered!
+          {%- elif is_state(alarm_type_device, "167") %}
+            BATTERY LOW 
+          {%- else -%}
+            {{ states("lock.assa_abloy_unknown_type0004_idaa00_locked") | title }}
+          {%- endif %}
+        icon_template: >-
+          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type" %}
+          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level" %}
+          {% set lock_device = "lock.assa_abloy_unknown_type0004_idaa00_locked" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "27") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "21") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "24") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "22") %}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "122") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "161") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "167") %}
+            mdi:battery-alert
+          {%- elif is_state(lock_device, 'locked') %}
+            mdi:lock
+          {%- else %}
+            mdi:lock-open-outline
+          {%- endif %}
+        friendly_name: 'Front Door'
+        entity_id:
+          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type
+          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_level
+          - lock.assa_abloy_unknown_type0004_idaa00_locked
+
+      front_door_lock_battery:
+        friendly_name: "Front Door Lock Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_2', 'battery_level') %}
+          {{ battery }}
+        icon_template: >-
+          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_2', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.assa_abloy_unknown_type0004_idaa00_2
+
+      # BASEMENT DOOR
+      basement_door_lock:
+        value_template: >-
+          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3" %}
+          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            {%- if is_state(alarm_level_device, "0") -%}
+              Unlocked by Stephen
+            {%- elif is_state(alarm_level_device, "1") -%}
+              Unlocked by Felipe
+            {%- else -%}
+              Unlocked by User {{ alarm_level_device }} 
+            {%- endif %}
+          {%- elif is_state(alarm_type_device, "27") %}
+            Auto-Relocked
+          {%- elif is_state(alarm_type_device, "21") %}
+            Locked 
+          {%- elif is_state(alarm_type_device, "22") %}
+            Unlocked by Hand
+          {%- elif is_state(alarm_type_device, "24") %}
+            Locked
+          {%- elif is_state(alarm_type_device, "25") %}
+            Unlocked by App
+          {%- elif is_state(alarm_type_device, "122") %}
+            Code {{ states(alarm_level) }} updated!
+          {%- elif is_state(alarm_type_device, "161") %}
+            Tampered!
+          {%- elif is_state(alarm_type_device, "167") %}
+            BATTERY LOW 
+          {%- else -%}
+            {{ states('lock.assa_abloy_unknown_type0004_idaa00_locked_3') | title }}
+          {%- endif %}
+        icon_template: >-
+          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3" %}
+          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3" %}
+          {% set lock_device = "lock.assa_abloy_unknown_type0004_idaa00_locked_3" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "27") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "21") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "24") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "22") %}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "122") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "161") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "167") %}
+            mdi:battery-alert
+          {%- elif is_state(lock_device, 'locked') %}
+            mdi:lock
+          {%- else %}
+            mdi:lock-open-outline
+          {%- endif %}
+        friendly_name: 'Basement Door'
+        entity_id:
+          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3
+          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3
+
+      basement_door_lock_battery:
+        friendly_name: "Basement Door Lock Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_4', 'battery_level') %}
+          {{ battery }}
+        icon_template: >
+          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_4', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.assa_abloy_unknown_type0004_idaa00_4 
+
+      # SIDE DOOR
+      side_door_lock:
+        value_template: >-
+          {% set alarm_type_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_type" %}
+          {% set alarm_level_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_level" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            {%- if is_state(alarm_level_device, "1") -%}
+              Unlocked by Stephen
+            {%- elif is_state(alarm_level_device, "2") -%}
+              Unlocked by Felipe
+            {%- else -%}
+              Unlocked by User {{ alarm_level_device }} 
+            {%- endif %}
+          {%- elif is_state(alarm_type_device, "27") %}
+            Auto-Relocked
+          {%- elif is_state(alarm_type_device, "21") %}
+            Locked 
+          {%- elif is_state(alarm_type_device, "22") %}
+            Unlocked by Hand
+          {%- elif is_state(alarm_type_device, "24") %}
+            Locked
+          {%- elif is_state(alarm_type_device, "25") %}
+            Unlocked by App
+          {%- elif is_state(alarm_type_device, "122") %}
+            Code {{ states(alarm_level) }} updated!
+          {%- elif is_state(alarm_type_device, "161") %}
+            Tampered!
+          {%- elif is_state(alarm_type_device, "167") %}
+            BATTERY LOW 
+          {%- else -%}
+            {{ states("lock.schlage_be469_touchscreen_deadbolt_locked") | title }}
+          {%- endif %}
+        icon_template: >-
+          {% set alarm_type_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_type" %}
+          {% set alarm_level_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_level" %}
+          {% set lock_device = "lock.schlage_be469_touchscreen_deadbolt_locked" %}
+          {%- if is_state(alarm_type_device, "19") -%}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "27") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "21") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "24") %}
+            mdi:lock
+          {%- elif is_state(alarm_type_device, "22") %}
+            mdi:lock-open-outline
+          {%- elif is_state(alarm_type_device, "122") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "161") %}
+            mdi:alert
+          {%- elif is_state(alarm_type_device, "167") %}
+            mdi:battery-alert
+          {%- elif is_state(lock_device, 'locked') %}
+            mdi:lock
+          {%- else %}
+            mdi:lock-open-outline
+          {%- endif %}
+        friendly_name: 'Side Door'
+        entity_id:
+          - sensor.schlage_be469_touchscreen_deadbolt_alarm_type
+          - sensor.schlage_be469_touchscreen_deadbolt_alarm_level
+          - lock.schlage_be469_touchscreen_deadbolt_locked 
+          - zwave.schlage_be469_touchscreen_deadbolt
+
+      side_door_lock_battery:
+        friendly_name: "Side Door Lock Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.schlage_be469_touchscreen_deadbolt', 'battery_level') %}
+          {{ battery }}
+        icon_template: >
+          {% set battery = state_attr('zwave.schlage_be469_touchscreen_deadbolt', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.schlage_be469_touchscreen_deadbolt

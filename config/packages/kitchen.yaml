@@ -1,0 +1,92 @@
+sensor:
+  - platform: template
+    sensors:
+      kitchen_zooz_battery:
+        friendly_name: "Kitchen Sensor Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.zooz_zse40_4in1_sensor_4', 'battery_level') %}
+          {{ battery }}
+        icon_template: >
+          {% set battery = state_attr('zwave.zooz_zse40_4in1_sensor_4', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.zooz_zse40_4in1_sensor_4 
+
+binary_sensor:
+  - platform: template
+    sensors:
+      kitchen_motion:
+        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_alarm_level_2') | int > 0 }}"
+        friendly_name: "Kitchen Motion"
+        device_class: motion
+        entity_id: sensor.zooz_zse40_4in1_sensor_alarm_level_2
+
+automation:
+  - alias: 'Kitchen Light - Motion'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.kitchen_motion
+      from: 'off'
+      to: 'on' 
+    condition:
+      condition: and
+      conditions:
+        - condition: numeric_state
+          entity_id: sensor.zooz_zse40_4in1_sensor_luminance_3 
+          below: 20
+        - condition: state
+          entity_id: light.dining_room_main_lights 
+          state: 'off'
+        - condition: state
+          entity_id: light.kitchen_main_lights 
+          state: 'off'
+    action:
+      - service: light.turn_on 
+        data:
+          entity_id: light.kitchen_main_lights
+          brightness_pct: 25
+      - service: light.turn_on 
+        data:
+          entity_id: light.dining_room_main_lights
+          brightness_pct: 15
+
+  - alias: 'Kitchen Light - Off'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.kitchen_motion
+      from: 'on'
+      to: 'off'
+      for:
+        minutes: 30 
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: light.dining_room_main_lights 
+          state: 'on'
+        - condition: state
+          entity_id: light.kitchen_main_lights 
+          state: 'on'
+    action:
+      - service: light.turn_off 
+        data:
+          entity_id: light.kitchen_main_lights
+      - service: light.turn_off 
+        data:
+          entity_id: light.dining_room_main_lights

@@ -1,0 +1,17 @@
+sensor:
+  - platform: apcupsd
+    resources:
+      - bcharge
+      - linev
+      - timeleft
+      - status
+      - loadpct
+  - platform: template
+    sensors:
+      ups_load_watts:
+        friendly_name: 'UPS Load'
+        value_template: "{{ states('sensor.ups_load') | float / 100 * 900 }}"
+        icon_template: mdi:power-socket-us
+
+apcupsd:
+  host: !secret server_ip

@@ -1,0 +1,59 @@
+sensor:
+  - platform: template
+    sensors:
+      basement_water_sensor_battery:
+        friendly_name: "Basement Water Heater Sensor Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.aeotec_zw122_water_sensor_6', 'battery_level') %}
+          {{ battery }}
+        icon_template: >
+          {% set battery = state_attr('zwave.aeotec_zw122_water_sensor_6', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.aeotec_zw122_water_sensor_6 
+
+binary_sensor:
+  - platform: template
+    sensors:
+      basement_water_heater_sensor:
+        friendly_name: Basement Water Heater Leak Sensor
+        device_class: moisture
+        value_template: >-
+          {{ is_state('sensor.aeotec_zw122_water_sensor_6_flood', '2') or is_state('sensor.aeotec_zw122_water_sensor_6_flood_2', '2') }}
+        entity_id:
+          - sensor.aeotec_zw122_water_sensor_6_flood
+          - sensor.aeotec_zw122_water_sensor_6_flood_2
+script:
+  water_heater_leak:
+    sequence:
+      - service: notify.notify
+        data:
+          message: "Water leak detected in basement near water heater."
+
+automation:
+  - alias: 'Water Heater Leak'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.basement_water_heater_sensor
+      from: 'off'
+      to: 'on'
+    action:
+      - service: script.turn_on 
+        data:
+          entity_id: script.water_heater_leak

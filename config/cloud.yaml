@@ -1,0 +1,46 @@
+alexa:
+  filter:
+    exclude_domains:
+      - automation
+      - binary_sensor
+      - sensor
+      - input_boolean
+      - input_number
+      - climate
+      - group
+      - media_player
+    exclude_entities:
+      - light.sunroom
+      - light.br1
+      - light.br2
+      - light.br3
+      - light.bath1
+      - light.bath2
+      - light.bath3
+      - switch.basement_tv_wol
+    include_entities:
+      - group.exterior
+      - group.interior
+      - input_boolean.basement_tv
+      - input_boolean.night_mode
+  entity_config:
+    input_boolean.basement_tv:
+      display_categories: SWITCH
+    input_boolean.night_mode:
+      display_categories: SWITCH
+    switch.air_filter:
+      display_categories: LIGHT
+    switch.back_entry_sconces:
+      display_categories: LIGHT
+    switch.front_porch_overhead_light:
+      display_categories: LIGHT
+    switch.new_york:
+      display_categories: LIGHT
+    switch.rear_deck_deck_lights:
+      display_categories: LIGHT
+    switch.sunroom_main_lights:
+      display_categories: LIGHT
+    group.exterior:
+      display_categories: LIGHT
+    group.interior:
+      display_categories: LIGHT

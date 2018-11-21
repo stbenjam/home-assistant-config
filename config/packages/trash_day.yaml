@@ -1,0 +1,98 @@
+# This has an input boolean for taking out trash that turns itself on on Trash
+# days.  There's no consideration for holidays or anything fancy like that.  Our
+# trash day is Friday.
+#
+# If you don't turn off the boolean, then you'll continue to get notifications.
+
+input_boolean:
+  take_out_trash:
+    name: Take Out Trash
+    icon: mdi:delete
+
+binary_sensor:
+  - platform: template
+    # Trash day
+    sensors:
+      trash:
+        friendly_name: "Trash Day"
+        value_template: >-
+          {{ now().weekday() == 3 or now().weekday() == 4 }}
+
+automation:
+  - alias: Trash Day
+    trigger:
+      platform: state
+      entity_id: binary_sensor.trash
+      from: 'off'
+      to: 'on'
+    action:
+      - service: persistent_notification.create
+        data:
+          message: "Trash day is soon!"
+
+  - alias: Trash Day - Input boolean
+    trigger:
+      platform: state
+      entity_id: binary_sensor.trash
+      from: 'off'
+      to: 'on'
+    action:
+      - service: input_boolean.turn_on
+        entity_id: input_boolean.take_out_trash
+
+  - alias: Trash Day - Notification Thursday 7pm
+    trigger:
+      platform: time
+      hours: 19
+      minutes: 0
+      seconds: 0
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: "{{ now().weekday() == 3 }}"
+        - condition: state
+          entity_id: input_boolean.take_out_trash
+          state: 'on'
+    action:
+      service: notify.notify
+      data_template:
+        message: "It's time to take out the trash."
+
+  - alias: Trash Day - Notification Thursday 9pm
+    trigger:
+      platform: time
+      hours: 21
+      minutes: 0
+      seconds: 0
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: "{{ now().weekday() == 3 }}"
+        - condition: state
+          entity_id: input_boolean.take_out_trash
+          state: 'on'
+    action:
+      service: notify.notify
+      data_template:
+        message: "It's time to take out the trash."
+
+  - alias: Trash Day - Notification Thursday 5:30am
+    trigger:
+      platform: time
+      hours: 5 
+      minutes: 30
+      seconds: 0
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: "{{ now().weekday() == 4 }}"
+        - condition: state
+          entity_id: input_boolean.take_out_trash
+          state: 'on'
+    action:
+      service: notify.notify
+      data_template:
+        message: "It's time to take out the trash."

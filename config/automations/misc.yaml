@@ -1,52 +1,20 @@
-- alias: 'Basement TV Status'
+- alias: 'Set theme at startup'
+  initial_state: 'on'
   trigger:
-    platform: state
-    entity_id: binary_sensor.basement_tv
+   - platform: homeassistant
+     event: start
   action:
-    - service_template: >
-        {% if states('binary_sensor.basement_tv') == 'on' %}
-          input_boolean.turn_on
-        {% else %}
-          input_boolean.turn_off
-        {% endif %}
-      entity_id: input_boolean.basement_tv
+    service: frontend.set_theme
+    data:
+      name: midnight
 
-- alias: 'Basement TV On'
-  trigger:
-    platform: state
-    entity_id: input_boolean.basement_tv
-    from: 'off'
-    to: 'on'
-  condition:
-    condition: state
-    entity_id: binary_sensor.basement_tv
-    state: 'off'
-  action:
-    - service: switch.turn_on
-      entity_id: switch.basement_tv_wol
-    - service: rest_command.basement_tv_power_on
-
-- alias: 'Basement TV Off'
-  trigger:
-    platform: state
-    entity_id: input_boolean.basement_tv
-    from: 'on'
-    to: 'off'
-  condition:
-    condition: state
-    entity_id: binary_sensor.basement_tv
-    state: 'on'
-  action:
-    - service: rest_command.basement_tv_power_off
-
-# New York is the name of a light in our bedroom
 - alias: Turn New York Off Automatically
   trigger:
-  - entity_id: switch.new_york
+  - entity_id: switch.new_york 
     platform: state
     from: 'off'
     to: 'on'
-    for:
+    for: 
       minutes: 30
   condition: []
   action:
@@ -54,8 +22,7 @@
       entity_id: switch.new_york
     service: switch.turn_off
 
-# Turn on some outside lights before sunset
-- alias: Outside Light - Sunset
+- alias: Porch Light - Sunset
   trigger:
     platform: sun
     event: sunset
@@ -63,16 +30,28 @@
   action:
   - data:
       entity_id:
-        - switch.front_porch_overhead_light
+        - switch.back_entry_sconces
     service: switch.turn_on
 
-- alias: Trash Day
+- alias: Front Door Light - Sunset
+  trigger:
+    platform: sun
+    event: sunset
+    offset: "-00:45:00"
+  action:
+  - data:
+      entity_id:
+        - light.front_door_light
+    service: light.turn_on
+
+- alias: Lock Low Battery
   trigger:
     platform: state
-    entity_id: binary_sensor.trash
-    from: 'off'
-    to: 'on'
+    entity_id:
+      - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type
+      - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_2
+    to: "167"
   action:
     - service: persistent_notification.create
       data:
-        message: "Trash day is soon!"
+        message: "One of your door locks has indicated it's battery is low."

@@ -1,6 +1,19 @@
-script.spotify_music:
-  friendly_name: Play
-  icon: mdi:play
+light.hue_go_1:
+  name: Hue Go
+sensor.powerwall_battery:
+  icon: mdi:battery
+sensor.grid_power:
+  icon: mdi:grid
+sensor.lifetime_generation:
+  icon: mdi:sigma
+sensor.connected_optimizers:
+  icon: mdi:square
+sensor.powerwall_power:
+  icon: mdi:battery-charging
+sensor.solar_power:
+  icon: mdi:weather-sunny
+sensor.home_power:
+  icon: mdi:home
 sensor.season:
   icon: mdi:beach
 sensor.dark_sky_summary:
@@ -24,9 +37,23 @@ switch.new_york:
   icon: mdi:city
 switch.air_filter:
   icon: mdi:filter
+binary_sensor.hallway_thermostat_has_leaf:
+  hidden: true
+binary_sensor.hallway_thermostat_fan:
+  hidden: true
+binary_sensor.home_away:
+  hidden: true
+binary_sensor.hallway_thermostat_online:
+  hidden: true
 sensor.basement_nest_protect_battery_health:
   friendly_name: 'Nest Battery : Basement'
   icon: mdi:battery
+light.br1:
+  hidden: true
+light.br2:
+  hidden: true
+light.br3:
+  hidden: true
 light.dining_room_main_lights:
   friendly_name: Dining Room
 light.hallway_main_lights:
@@ -34,13 +61,41 @@ light.hallway_main_lights:
 light.kitchen_main_lights:
   friendly_name: Kitchen
 light.basement:
-  friendly_name: Basement
+  hidden: true
+sensor.basement_nest_protect_co_status:
+  hidden: true
+binary_sensor.basement_nest_protect_online:
+  hidden: true
+sensor.basement_nest_protect_smoke_status:
+  hidden: true
 sensor.hallway_nest_protect_battery_health:
-  friendly_name: "Nest Battery : Hallway"
+  friendly_name: 'Nest Battery : Hallway'
   icon: mdi:battery
+sensor.hallway_nest_protect_co_status:
+  hidden: true
+binary_sensor.hallway_nest_protect_online:
+  hidden: true
+sensor.hallway_nest_protect_smoke_status:
+  hidden: true
+binary_sensor.hallway_thermostat_is_locked:
+  hidden: true
+binary_sensor.hallway_thermostat_is_using_emergency_heat:
+  hidden: true
 sensor.master_bedroom_nest_protect_battery_health:
-  friendly_name: "Nest Battery : Master Bedroom"
+  friendly_name: 'Nest Battery : Master Bedroom'
   icon: mdi:battery
+sensor.master_bedroom_nest_protect_co_status:
+  hidden: true
+binary_sensor.master_bedroom_nest_protect_online:
+  hidden: true
+sensor.master_bedroom_nest_protect_smoke_status:
+  hidden: true
+sensor.hallway_thermostat_target:
+  hidden: true
+sensor.hallway_thermostat_temperature:
+  hidden: true
+sensor.yr_symbol:
+  friendly_name: Weather
 sensor.basement_nest_protect_color_status:
   icon: mdi:fire
   friendly_name: Basement - Nest Protect
@@ -50,14 +105,21 @@ sensor.hallway_nest_protect_color_status:
 sensor.master_bedroom_nest_protect_color_status:
   icon: mdi:fire
   friendly_name: Bedroom - Nest Protect
+sensor.hallway_thermostat_operation_mode:
+  hidden: true
 sensor.hallway_thermostat_hvac_state:
   friendly_name: HVAC
   icon: mdi:fan
+sensor.home_eta:
+  hidden: true
 light.office_floor_lamp:
   friendly_name: Office
 switch.sunroom_main_lights:
   friendly_name: Sunroom
   icon: mdi:lightbulb
+light.sunroom_star:
+  friendly_name: Sunroom Star
+  icon: mdi:star
 switch.back_entry_sconces:
   friendly_name: Side Entry Light
   icon: mdi:lightbulb
@@ -81,5 +143,38 @@ lock.assa_abloy_unknown_type0004_idaa00_locked_3:
   friendly_name: Basement Door
 lock.schlage_be469_touchscreen_deadbolt_locked:
   friendly_name: Side Door
-switch.living_room_tv:
-  icon: mdi:television-classic
+switch.sunroom_heater:
+  icon: mdi:radiator
+switch.main_bathroom_exhaust_fan:
+  icon: mdi:fan
+  friendly_name: Exhaust Fan
+light.main_bathroom_vanity_lights:
+  friendly_name: Bathroom
+  brightness_pct: 50
+sensor.zooz_zse40_4in1_sensor_temperature_2:
+  friendly_name: Bathroom Temperature
+  icon: mdi:temperature-fahrenheit
+sensor.zooz_zse40_4in1_sensor_relative_humidity_2:
+  friendly_name: Bathroom Humidity
+  icon: mdi:water-percent
+sensor.zooz_zse40_4in1_sensor_relative_humidity_3:
+  friendly_name: Kitchen Humidity
+  icon: mdi:water-percent
+sensor.zooz_zse40_4in1_sensor_luminance_3:
+  friendly_name: Kitchen Luminance
+  icon: mdi:candle
+sensor.zooz_zse40_4in1_sensor_temperature_3:
+  friendly_name: Kitchen Temperature
+  icon: mdi:temperature-fahrenheit
+binary_sensor.bathroom_motion:
+  friendly_name: Bathroom Motion
+  icon: mdi:run
+binary_sensor.shower_on:
+  friendly_name: Shower
+  icon: mdi:shower-head
+scene.dinner:
+  icon: mdi:silverware-fork-knife
+scene.lights_out:
+  icon: mdi:power
+binary_sensor.bathroom_occupied:
+  friendly_name: Bathroom Occupied

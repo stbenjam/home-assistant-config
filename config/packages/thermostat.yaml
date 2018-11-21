@@ -1,0 +1,48 @@
+input_number:
+  day_temperature:
+    name: Day Temperature
+    initial: 70
+    min: 60
+    max: 74
+    step: 1
+    mode: slider
+    icon: mdi:weather-sunny
+  night_temperature:
+    name: Night Temperature
+    initial: 65
+    min: 60
+    max: 74
+    step: 1
+    mode: slider
+    icon: mdi:weather-night
+
+automation:
+  - alias: 'Set Day Temperature'
+    trigger:
+      platform: state
+      entity_id: input_boolean.night_mode 
+      to: 'off'
+    condition:
+      condition: state
+      entity_id: input_boolean.is_away
+      state: 'off'
+    action:
+      service: climate.set_temperature
+      data_template:
+        entity_id: climate.hallway
+        temperature: "{{ states('input_number.day_temperature') | float }}"
+
+  - alias: 'Set Night Temperature'
+    trigger:
+      platform: state
+      entity_id: input_boolean.night_mode 
+      to: 'on'
+    condition:
+      condition: state
+      entity_id: input_boolean.is_away
+      state: 'off'
+    action:
+      service: climate.set_temperature
+      data_template:
+        entity_id: climate.hallway
+        temperature: "{{ states('input_number.night_temperature') | float }}"

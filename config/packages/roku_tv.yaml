@@ -1,0 +1,70 @@
+# This set of sensors makes use of the Roku TV's API, to create a switch.
+# TODO: It'd be nice to write an actual switch as part of the Roku component.
+# This is hacky.
+
+input_boolean:
+  basement_tv:
+    name: Basement TV
+    icon: mdi:television-classic
+
+rest_command:
+  basement_tv_power_off:
+    url: http://IP:8060/keypress/PowerOff
+    method: post
+  basement_tv_power_on:
+    url: http://IP:8060/keypress/PowerOn
+    method: post
+
+switch:
+  - name: basement_tv_wol
+    platform: wake_on_lan
+    mac_address: '5c-ad-76-31-81-74'
+    broadcast_address: IP 
+
+binary_sensor:
+  - platform: command_line
+    command:  "curl http://IP:8060/query/device-info 2>&1 | grep PowerOn > /dev/null 2>&1 && echo ON || echo OFF"
+    name: 'Basement TV'
+    command_timeout: 5
+
+automation:
+  - alias: 'Basement TV Status'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.basement_tv
+    action:
+      - service_template: >
+          {% if states('binary_sensor.basement_tv') == 'on' %}
+            input_boolean.turn_on
+          {% else %}
+            input_boolean.turn_off
+          {% endif %}
+        entity_id: input_boolean.basement_tv
+
+  - alias: 'Basement TV On'
+    trigger:
+      platform: state
+      entity_id: input_boolean.basement_tv
+      from: 'off'
+      to: 'on'
+    condition:
+      condition: state
+      entity_id: binary_sensor.basement_tv
+      state: 'off'
+    action:
+      - service: switch.turn_on
+        entity_id: switch.basement_tv_wol
+      - service: rest_command.basement_tv_power_on
+
+  - alias: 'Basement TV Off'
+    trigger:
+      platform: state
+      entity_id: input_boolean.basement_tv
+      from: 'on'
+      to: 'off'
+    condition:
+      condition: state
+      entity_id: binary_sensor.basement_tv
+      state: 'on'
+    action:
+      - service: rest_command.basement_tv_power_off

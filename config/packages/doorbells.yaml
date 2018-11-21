@@ -1,0 +1,269 @@
+# I use Nexia Z-wave doorbell sensors to make my regular old doorbells notify
+# HA when it's pressed.  They're super flaky and there's a bunch of hacks in
+# here to make them work.  It seems to be somewhat reliable after this,
+# although very rarely I get ghost notifications.
+
+input_boolean:
+  doorbell_front:
+    name: Doorbell Front
+    initial: false
+  doorbell_side:
+    name: Doorbell Side
+    initial: false
+
+sensor:
+  - platform: template
+    sensors:
+      front_doorbell_battery:
+        friendly_name: "Front Doorbell Sensor Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.nexia_db100z_doorbell_sensor', 'battery_level') %}
+          {{ battery }}
+        icon_template: >-
+          {% set battery = state_attr('zwave.nexia_db100z_doorbell_sensor', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.nexia_db100z_doorbell_sensor
+
+      side_doorbell_battery:
+        friendly_name: "Side Doorbell Sensor Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.nexia_db100z_doorbell_sensor_2', 'battery_level') %}
+          {{ battery }}
+        icon_template: >-
+          {% set battery = state_attr('zwave.nexia_db100z_doorbell_sensor_2', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.nexia_db100z_doorbell_sensor_2
+
+binary_sensor:
+  - platform: template
+    sensors:
+      doorbell_front:
+        friendly_name: "Front Doorbell"
+        value_template: '{{ is_state("input_boolean.doorbell_front", "on") }}'
+        icon_template: >-
+          {%- if is_state("input_boolean.doorbell_front", "on") %}
+          mdi:bell-ring
+          {%- else %}
+          mdi:bell
+          {%- endif %}
+        entity_id: input_boolean.doorbell_front
+
+      doorbell_side:
+        friendly_name: "Side Doorbell"
+        value_template: '{{ is_state("input_boolean.doorbell_side", "on") }}'
+        icon_template: >-
+          {%- if is_state("input_boolean.doorbell_side", "on") %}
+          mdi:bell-ring
+          {%- else %}
+          mdi:bell
+          {%- endif %}
+        entity_id: input_boolean.doorbell_side 
+
+automation:
+  # Hacks to make the Nexia doorbell work with HA.
+  #
+  # Toggle doorbell if Nexia power management receives any event. It tends to get
+  # stuck at 'on' and reset itself the next time the doorbell is pressed, so this
+  # is kind of a hacky way to consider any power management event a doorbell press,
+  # regardless of the actual state.
+  #
+  - alias: 'Doorbell Front ON 1'
+    trigger:
+      platform: state
+      entity_id: sensor.nexia_db100z_doorbell_sensor_power_management
+      from: '0'
+      to: '1'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.doorbell_front
+
+  - alias: 'Doorbell Front ON 2'
+    trigger:
+      platform: state
+      entity_id: sensor.nexia_db100z_doorbell_sensor_power_management
+      from: '1'
+      to: '0'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.doorbell_front
+
+  - alias: 'Doorbell Front OFF'
+    trigger:
+      platform: state
+      entity_id: input_boolean.doorbell_front
+      from: 'off'
+      to: 'on'
+      for: 
+        minutes: 1
+    action:
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.doorbell_front
+
+  - alias: 'Doorbell - Front'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.doorbell_front
+      from: 'off'
+      to: 'on'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: script.turn_on 
+        data:
+          entity_id: script.front_door
+
+  ## SIDE DOORBELL ##
+
+  - alias: 'Doorbell Side ON 1'
+    trigger:
+      platform: state
+      entity_id: sensor.nexia_db100z_doorbell_sensor_power_management_2
+      from: '0'
+      to: '1'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.doorbell_side
+
+  - alias: 'Doorbell Side ON 2'
+    trigger:
+      platform: state
+      entity_id: sensor.nexia_db100z_doorbell_sensor_power_management_2
+      from: '1'
+      to: '0'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.doorbell_side
+
+  - alias: 'Doorbell Side OFF'
+    trigger:
+      platform: state
+      entity_id: input_boolean.doorbell_side
+      from: 'off'
+      to: 'on'
+      for: 
+        minutes: 1
+    action:
+      - service: input_boolean.turn_off
+        data:
+          entity_id: input_boolean.doorbell_side
+
+  - alias: 'Doorbell - Side'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.doorbell_side
+      from: 'off'
+      to: 'on'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.uptime
+      above: 5
+    action:
+      - service: script.turn_on 
+        data:
+          entity_id: script.side_door
+
+script:
+  front_door:
+    sequence:
+      - service: notify.basement
+        data_template:
+          message: "Someone is at the front door."
+      - service: notify.ios_stephen
+        data:
+          message: "Someone is at the front door. Press and hold to see camera stream." 
+          data:
+            attachment:
+              content-type: jpeg
+            push:
+              category: camera
+            entity_id: camera.front
+      - service: notify.ios_iphone
+        data:
+          message: "Someone is at the front door. Press and hold to see camera stream." 
+          data:
+            attachment:
+              content-type: jpeg
+            push:
+              category: camera
+            entity_id: camera.front
+
+  side_door:
+    sequence:
+      - service: notify.basement
+        data_template:
+          message: "Someone is at the side door."
+      - service: notify.ios_stephen
+        data:
+          message: "Someone is at the side door. Press and hold to see camera stream." 
+          data:
+            attachment:
+              content-type: jpeg
+            push:
+              category: camera
+            entity_id: camera.front
+      - service: notify.ios_iphone
+        data:
+          message: "Someone is at the side door. Press and hold to see camera stream." 
+          data:
+            attachment:
+              content-type: jpeg
+            push:
+              category: camera
+            entity_id: camera.front

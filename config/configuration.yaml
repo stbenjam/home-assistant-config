@@ -1,15 +1,11 @@
 homeassistant:
-  name: Home
+  name: Home 
   latitude: !secret latitude
   longitude: !secret longitude
   elevation: 70
   unit_system: imperial
   time_zone: America/New_York
   customize: !include customize.yaml
-  customize_glob:
-    "light.*":
-      custom_ui_state_card: state-card-custom-ui
-      state_card_mode: break-line-toggle
   packages: !include_dir_named packages
 
 #logger:
@@ -19,22 +15,25 @@ http:
   api_password: !secret http
   base_url: !secret url
 
-customizer:
-  custom_ui: local
-
 automation: !include_dir_merge_list automations
 cloud: !include cloud.yaml
 config:
 conversation:
 discovery:
 frontend:
+  themes: !include themes.yaml
 group: !include groups.yaml
 history:
-intent_script: !include intents.yaml
 ios:
+
 logbook:
 recorder:
+  exclude:
+    domains:
+      - input_number
+      - zwave
   db_url: !secret db_url
+script: !include scripts.yaml
 shopping_list:
 sun:
 tts:
@@ -46,485 +45,33 @@ nest:
   client_secret: !secret nest_secret
 
 lutron_caseta:
-  host: <X.X.X.X>
+  host: !secret lutron_hub
   keyfile: /config/certs/caseta.key
   certfile: /config/certs/caseta.crt
   ca_certs: /config/certs/caseta-bridge.crt
 
-input_boolean:
-  guest_mode:
-    name: Guest Mode
-    icon: mdi:account-multiple
-    initial: false
-  is_away:
-    name: Away Mode
-    icon: mdi:home
-  basement_tv:
-    name: Basement TV
-    icon: mdi:television-classic
-
-device_tracker:
-  - platform: unifi
-    host: <X.X.X.X>
-    verify_ssl: false
-    username: !secret unifi_user
-    password: !secret unifi_pass
-    new_device_defaults:
-      track_new_devices: True
-      hide_if_away: True
-    detection_time: 300
-    ssid_filter:
-      - <MAIN NETWORK>
-      - <GUEST NETWORK>
-
-# My TCL Roku TV:
-rest_command:
-  basement_tv_power_off:
-    url: http://<X.X.X.X>:8060/keypress/PowerOff
-    method: post
-  basement_tv_power_on:
-    url: http://<X.X.X.X>:8060/keypress/PowerOn
-    method: post
-
 switch:
   - platform: tplink
-    host: <X.X.X.X>
+    host: IP 
   - platform: tplink
-    host: <X.X.X.X>
+    host: IP 
   - platform: tplink
-    host: <X.X.X.X>
-  - name: basement_tv_wol
-    platform: wake_on_lan
-    mac_address: <MAC ADDR>
-    broadcast_address: <X.X.X.X>
+    host: IP 
 
 camera:
   - platform: generic
-    still_image_url: https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=BOX&brand=wui&num=8&delay=30
+    still_image_url: https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=BOX
     name: Radar
+  - platform: uvc
+    nvr: IP 
+    key: !secret unifi_video_key
+    password: !secret unifi_camera
 
 sensor:
-  # PowerWall Sensors
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/meters/aggregates
-    value_template: '{{ (value_json.site.instant_power | float / 1000) | round(2) }}'
-    name: 'Grid Power'
-    unit_of_measurement: 'kW'
-    scan_interval: 60
-    verify_ssl: false
-    icon_template: mdi:grid
+  - platform: season
 
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/meters/aggregates
-    value_template: '{{ (value_json.solar.instant_power | float / 1000) | round(2) }}'
-    name: 'Solar Power'
-    unit_of_measurement: 'kW'
-    scan_interval: 60
-    verify_ssl: false
-    icon_template: mdi:weather-sunny
-
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/meters/aggregates
-    value_template: '{{ (value_json.battery.instant_power | float / 1000) | round(2) }}'
-    name: 'Powerwall Power'
-    unit_of_measurement: 'kW'
-    scan_interval: 60
-    verify_ssl: false
-    icon_template: >-
-      {%- if states('sensor.powerwall_power') | float > 0 %}
-      mdi:battery
-      {%- else %}
-      mdi:battery-charging
-      {%- endif %}
-
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/meters/aggregates
-    value_template: '{{ (value_json.load.instant_power | float / 1000) | round(2) }}'
-    name: 'Home Power'
-    unit_of_measurement: 'kW'
-    scan_interval: 60
-    verify_ssl: false
-
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/system_status/soe
-    value_template: '{{ (value_json.percentage | float | round(0)) }}'
-    name: 'Powerwall Battery'
-    unit_of_measurement: '%'
-    scan_interval: 60
-    verify_ssl: false
-    icon_template: >-
-      {%- set battery = states('sensor.powerwall_battery') | float %}
-      {%- if battery > 90 %}
-        mdi:battery
-      {%- elif battery > 80 %}
-        mdi:battery-90
-      {%- elif battery > 70 %}
-        mdi:battery-80
-      {%- elif battery > 60 %}
-        mdi:battery-70
-      {%- elif battery > 50 %}
-        mdi:battery-60
-      {%- elif battery > 40 %}
-        mdi:battery-50
-      {%- elif battery > 30 %}
-        mdi:battery-40
-      {%- elif battery > 20 %}
-        mdi:battery-30
-      {%- elif battery > 10 %}
-        mdi:battery-20
-      {%- else %}
-        mdi:battery-outline
-      {% endif %}
-
-  # SolarEdge sensors, overview url should be:
-  #   https://monitoringapi.solaredge.com/site/<SITE ID>/overview.json?api_key=<API_KEY>
-  - platform: rest
-    resource: !secret solaredge_overview_url
-    value_template: '{{ (value_json.overview.lastMonthData.energy | float / 1000) | round(2) }}'
-    name: 'Solar Month'
-    unit_of_measurement: 'kWh'
-    scan_interval: 86400
-  - platform: rest
-    resource: !secret solaredge_overview_url
-    value_template: '{{ (value_json.overview.lastDayData.energy | float / 1000) | round(2) }}'
-    name: 'Solar Today'
-    unit_of_measurement: 'kWh'
-    scan_interval: 3600
-  - platform: rest
-    resource: !secret solaredge_overview_url
-    value_template: '{{ (value_json.overview.currentPower.power | float / 1000) | round(2) }}'
-    name: 'Solar Live'
-    unit_of_measurement: 'kW'
-    scan_interval: 600
-  - platform: template
-    sensors:
-      solar_max:
-        icon_template: mdi:trending-up
-        friendly_name: "Solar Max Today"
-        unit_of_measurement: "kW"
-        value_template: "{{ states('input_number.solar_max') | float }}"
-        entity_id: input_number.solar_max
-      guests:
-        icon_template: mdi:account-multiple
-        friendly_name: "Guests"
-        value_template: >
-          {%- for device in state_attr("group.all_devices", "entity_id") %}
-          {%- if device not in ['device_tracker.stephensiphone', 'device_tracker.iphone'] and is_state(device, "home") %}
-          {{ state_attr(device, "friendly_name") }}
-          {%- endif %}
-          {%- endfor %}
-        entity_id: !include default_view/people.yaml
-
-      # FRONT DOOR
-      front_door_lock:
-        value_template: >-
-          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type" %}
-          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            {%- if is_state(alarm_level_device, "0") -%}
-              Unlocked by Stephen
-            {%- elif is_state(alarm_level_device, "1") -%}
-              Unlocked by Felipe
-            {%- else -%}
-              Unlocked by User {{ alarm_level_device }}
-            {%- endif %}
-          {%- elif is_state(alarm_type_device, "27") %}
-            Auto-Relocked
-          {%- elif is_state(alarm_type_device, "21") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "22") %}
-            Unlocked by Hand
-          {%- elif is_state(alarm_type_device, "24") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "25") %}
-            Unlocked by App
-          {%- elif is_state(alarm_type_device, "122") %}
-            Code {{ state(alarm_level_device) }} updated!
-          {%- elif is_state(alarm_type_device, "161") %}
-            Tampered!
-          {%- elif is_state(alarm_type_device, "167") %}
-            BATTERY LOW
-          {%- else -%}
-            Unknown Type {{ state(alarm_type_device) }} Level {{ state(alarm_level_device) }}
-          {%- endif %}
-        icon_template: >-
-          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type" %}
-          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "27") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "21") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "24") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "22") %}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "122") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "161") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "167") %}
-            mdi:battery-alert
-          {%- else -%}
-            mdi:lock-open
-          {%- endif %}
-        friendly_name: 'Front Door'
-        entity_id:
-          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type
-          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_level
-      front_door_lock_battery:
-        friendly_name: "Front Door Lock Battery"
-        unit_of_measurement: "%"
-        value_template: >
-          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_2', 'battery_level') %}
-          {{ battery }}
-        icon_template: >
-          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_2', 'battery_level') %}
-          {% if battery > 90 %}
-            mdi:battery
-          {% elif battery > 80 %}
-            mdi:battery-90
-          {% elif battery > 70 %}
-            mdi:battery-80
-          {% elif battery > 60 %}
-            mdi:battery-70
-          {% elif battery > 50 %}
-            mdi:battery-60
-          {% elif battery > 40 %}
-            mdi:battery-50
-          {% elif battery > 30 %}
-            mdi:battery-40
-          {% else %}
-            mdi:battery-outline
-          {% endif %}
-        entity_id: zwave.assa_abloy_unknown_type0004_idaa00_2
-
-      # BASEMENT DOOR
-      basement_door_lock:
-        value_template: >-
-          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3" %}
-          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            {%- if is_state(alarm_level_device, "0") -%}
-              Unlocked by Stephen
-            {%- elif is_state(alarm_level_device, "1") -%}
-              Unlocked by Felipe
-            {%- else -%}
-              Unlocked by User {{ alarm_level_device }}
-            {%- endif %}
-          {%- elif is_state(alarm_type_device, "27") %}
-            Auto-Relocked
-          {%- elif is_state(alarm_type_device, "21") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "22") %}
-            Unlocked by Hand
-          {%- elif is_state(alarm_type_device, "24") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "25") %}
-            Unlocked by App
-          {%- elif is_state(alarm_type_device, "122") %}
-            Code {{ state(alarm_level) }} updated!
-          {%- elif is_state(alarm_type_device, "161") %}
-            Tampered!
-          {%- elif is_state(alarm_type_device, "167") %}
-            BATTERY LOW
-          {%- else -%}
-            Unknown Type {{ state(alarm_type_device) }} Level {{ state(alarm_level_device) }}
-          {%- endif %}
-        icon_template: >-
-          {% set alarm_type_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3" %}
-          {% set alarm_level_device = "sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "27") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "21") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "24") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "22") %}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "122") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "161") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "167") %}
-            mdi:battery-alert
-          {%- else -%}
-            mdi:lock-open
-          {%- endif %}
-        friendly_name: 'Basement Door'
-        entity_id:
-          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_type_3
-          - sensor.assa_abloy_unknown_type0004_idaa00_alarm_level_3
-      basement_door_lock_battery:
-        friendly_name: "Basement Door Lock Battery"
-        unit_of_measurement: "%"
-        value_template: >
-          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_4', 'battery_level') %}
-          {{ battery }}
-        icon_template: >
-          {% set battery = state_attr('zwave.assa_abloy_unknown_type0004_idaa00_4', 'battery_level') %}
-          {% if battery > 90 %}
-            mdi:battery
-          {% elif battery > 80 %}
-            mdi:battery-90
-          {% elif battery > 70 %}
-            mdi:battery-80
-          {% elif battery > 60 %}
-            mdi:battery-70
-          {% elif battery > 50 %}
-            mdi:battery-60
-          {% elif battery > 40 %}
-            mdi:battery-50
-          {% elif battery > 30 %}
-            mdi:battery-40
-          {% else %}
-            mdi:battery-outline
-          {% endif %}
-        entity_id: zwave.assa_abloy_unknown_type0004_idaa00_4
-
-      # SIDE DOOR
-      side_door_lock:
-        value_template: >-
-          {% set alarm_type_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_type" %}
-          {% set alarm_level_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_level" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            {%- if is_state(alarm_level_device, "1") -%}
-              Unlocked by Stephen
-            {%- elif is_state(alarm_level_device, "2") -%}
-              Unlocked by Felipe
-            {%- else -%}
-              Unlocked by User {{ alarm_level_device }}
-            {%- endif %}
-          {%- elif is_state(alarm_type_device, "27") %}
-            Auto-Relocked
-          {%- elif is_state(alarm_type_device, "21") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "22") %}
-            Unlocked by Hand
-          {%- elif is_state(alarm_type_device, "24") %}
-            Locked
-          {%- elif is_state(alarm_type_device, "25") %}
-            Unlocked by App
-          {%- elif is_state(alarm_type_device, "122") %}
-            Code {{ state(alarm_level) }} updated!
-          {%- elif is_state(alarm_type_device, "161") %}
-            Tampered!
-          {%- elif is_state(alarm_type_device, "167") %}
-            BATTERY LOW
-          {%- else -%}
-            {{ states("lock.schlage_be469_touchscreen_deadbolt_locked") }}
-          {%- endif %}
-        icon_template: >-
-          {% set alarm_type_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_type" %}
-          {% set alarm_level_device = "sensor.schlage_be469_touchscreen_deadbolt_alarm_level" %}
-          {%- if is_state(alarm_type_device, "19") -%}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "27") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "21") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "24") %}
-            mdi:lock
-          {%- elif is_state(alarm_type_device, "22") %}
-            mdi:lock-open-outline
-          {%- elif is_state(alarm_type_device, "122") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "161") %}
-            mdi:alert
-          {%- elif is_state(alarm_type_device, "167") %}
-            mdi:battery-alert
-          {%- else -%}
-            mdi:lock-open
-          {%- endif %}
-        friendly_name: 'Side Door'
-        entity_id:
-          - sensor.schlage_be469_touchscreen_deadbolt_alarm_type
-          - sensor.schlage_be469_touchscreen_deadbolt_alarm_level
-          - lock.schlage_be469_touchscreen_deadbolt_locked
-          - zwave.schlage_be469_touchscreen_deadbolt
-      side_door_lock_battery:
-        friendly_name: "Side Door Lock Battery"
-        unit_of_measurement: "%"
-        value_template: >
-          {% set battery = state_attr('zwave.schlage_be469_touchscreen_deadbolt', 'battery_level') %}
-          {{ battery }}
-        icon_template: >
-          {% set battery = state_attr('zwave.schlage_be469_touchscreen_deadbolt', 'battery_level') %}
-          {% if battery > 90 %}
-            mdi:battery
-          {% elif battery > 80 %}
-            mdi:battery-90
-          {% elif battery > 70 %}
-            mdi:battery-80
-          {% elif battery > 60 %}
-            mdi:battery-70
-          {% elif battery > 50 %}
-            mdi:battery-60
-          {% elif battery > 40 %}
-            mdi:battery-50
-          {% elif battery > 30 %}
-            mdi:battery-40
-          {% else %}
-            mdi:battery-outline
-          {% endif %}
-        entity_id: zwave.schlage_be469_touchscreen_deadbolt
-
-
-binary_sensor:
-  - platform: command_line
-    command:  "curl http://<TV IP>:8060/query/device-info 2>&1 | grep PowerOn > /dev/null 2>&1 && echo ON || echo OFF"
-    name: 'Basement TV'
-    command_timeout: 5
-
-  - platform: template
-    sensors:
-      # Trash day
-      trash:
-        friendly_name: "Trash Day"
-        value_template: >-
-          {{ now().weekday() == 3 or now().weekday() == 4 }}
-      # Bathroom Motion / Humidity
-      bathroom_motion:
-        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_alarm_level') | int > 0 }}"
-        friendly_name: "Bathroom Motion"
-        device_class: motion
-        entity_id: sensor.zooz_zse40_4in1_sensor_alarm_level
-      shower_on:
-        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_relative_humidity_2') | float - states('sensor.hallway_thermostat_humidity') | float > 15 }}"
-        friendly_name: "Shower On"
-        entity_id: sensor.zooz_zse40_4in1_sensor_relative_humidity_2
-
-  # PowerWall Grid Status:
-  - platform: rest
-    resource: https://<POWERWALL IP>/api/system_status/grid_status
-    verify_ssl: false
-    method: GET
-    name: Grid Status
-    scan_interval: 60
-    value_template: "{{ value_json.grid_status == 'SystemGridConnected' }}"
-
-weblink:
-  entities:
-    - name: Powerwall UI
-      url: https://<POWERWALL IP>/
-      icon: mdi:web
-
-input_number:
-  solar_max:
-    name: Solar Max Today
-    min: 0.0
-    max: 8.85
-    unit_of_measurement: kW
-
-history_graph:
-  solar:
-    name: Solar
-    entities:
-      - sensor.solar_live
-    hours_to_show: 24
+  - platform: uptime
+    unit_of_measurement: minutes
 
 scene:
   - name: Dinner
@@ -537,34 +84,41 @@ scene:
         brightness: 30
       light.living_room_floor_lamp:
         state: off
-  - name: Movie
-    entities:
-      light.dining_room:
-        state: off
-      light.kitchen_main_lights:
-        state: off
-      switch.sunroom_main_lights:
-        state: off
-      light.living_room_floor_lamp:
-        state: off
   - name: Lights Out
     entities:
       group.all_lights:
         state: off
       group.all_switches:
         state: off
+         
+nissan_leaf:
+    username: !secret nissan_username
+    password: !secret nissan_password
+    region: NNA 
+    nissan_connect: true 
+    update_interval: 30 
+    update_interval_charging: 15 
+    update_interval_climate: 5 
+    force_miles: true
+
+notify:
+  - platform: command_line
+    name: 'Bedroom'
+    command: "/config/alexa_wrapper.sh -d 'Bedroom'"
+  - platform: command_line
+    name: 'Basement'
+    command: "/config/alexa_wrapper.sh -d 'Basement'"
+  - platform: command_line
+    name: 'Kitchen'
+    command: "/config/alexa_wrapper.sh -d 'Kitchen Dot'"
+  - platform: command_line
+    name: 'Office'
+    command: "/config/alexa_wrapper.sh -d 'Office'"
+
+weather:
+  - platform: darksky
+    api_key: !secret darksky_key
 
 zwave:
   network_key: !secret zwave_key
   usb_path: /dev/ttyACM0
-
-
-nissan_leaf:
-    username: !secret nissan_username
-    password: !secret nissan_password
-    region: NNA
-    nissan_connect: true
-    update_interval: 30
-    update_interval_charging: 15
-    update_interval_climate: 5
-    force_miles: true

@@ -1,58 +1,120 @@
-# vi:syntax=yaml
-
-title: Home
+#
+# Main arguments, all optional
+#
+title: Home 
 widget_dimensions: [120, 120]
 widget_margins: [5, 5]
-columns: 8
+columns: 8 
 
 radar:
   widget_type: camera
-  entity_picture: https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=BOX&brand=wui&num=8&delay=30
+  entity_picture: https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=BOX
+  refresh: 300
+ 
+camera:
+  widget_type: iframe
+  img_list:
+    - http://IP/api/camera_proxy/camera.front
+    - http://IP/api/camera_proxy/camera.rear
+  refresh: 7
 
 clock:
   widget_type: clock
   widget_style: "background-color: #DC5945;"
   time_style: "color: white;"
 
-weather:
-  widget_type: weather
-  forecast_title: Tomorrow
-  prefer_icons: 1
-  show_forecast: 1
-  widget_style: "background-color: #ffaa00;"
-  main_style: "color: white;"
-  unit_style: "color: white;"
-  sub_style: "color: white; font-weight: bold;"
-  sub_unit_style: "color: white;"
-  title_style: "color: white;"
-  entities:
-    icon: sensor.dark_sky_icon
-    temperature: sensor.dark_sky_temperature
-    apparent_temperature: sensor.dark_sky_apparent_temperature
-    humidity: sensor.dark_sky_humidity
-    precip_probability: sensor.dark_sky_precip_probability
-    precip_intensity: sensor.dark_sky_precip_intensity
-    precip_type: sensor.dark_sky_precip
-    pressure: sensor.dark_sky_pressure
-    wind_speed: sensor.dark_sky_wind_speed
-    wind_bearing: sensor.dark_sky_wind_bearing
-    forecast_icon: sensor.dark_sky_icon_1
-    forecast_precip_probability: sensor.dark_sky_precip_probability_1
-    forecast_precip_type: sensor.dark_sky_precip_1
-    forecast_temperature_min: sensor.dark_sky_overnight_low_temperature_1
-    forecast_temperature_max: sensor.dark_sky_daytime_high_temperature_1
+sunrise:
+  widget_type: icon
+  entity: sensor.sunrise
+  title: Sunrise
+  title_style: "color: #ffc40d; font-size: 16pt;"
+  state_text: 1
+  state_text_style: "font-size: 18pt; color: #ffc40d;"
+  icons:
+    "default":
+      icon: mdi-weather-sunset-up
+      style: "color: #ffc40d;"
 
+sunset:
+  widget_type: icon
+  entity: sensor.sunset
+  title: Sunset
+  title_style: "color: #da532c; font-size: 16pt;"
+  state_text: 1
+  state_text_style: "font-size: 18pt; color: #da532c;"
+  icons:
+    "default":
+      icon: mdi-weather-sunset-down
+      style: "color: #da532c;"
+
+leaf_climate:
+  widget_type: switch
+  entity: switch.leaf_climate_control
+  icon_off: mdi-fan
+  icon_on: mdi-fan-off
+  title: Leaf Climate
+
+home_power:
+  widget_type: sensor
+  entity: sensor.home_power
+  title: Home Power
+  units: kW
+  precision: 2
+
+grid_status:
+  widget_type: binary_sensor
+  entity: binary_sensor.grid_status
+  title: Power Grid
+  icon_style_active: "color: #00FF00;"
+  icon_style_inactive: "color: #FF0000;"
+  icon_on: mdi-grid
+  icon_off: mdi-grid-off
+
+powerwall_battery:
+  high_color: '#00FF00'
+  med_color: '#FFFF00'
+  low_color: '#FF0000'
+  color: '#FFFFFF'
+  widget_type: gauge
+  min: 0
+  max: 100
+  entity: sensor.powerwall_battery
+  precision: 1
+  title: Powerwall
+  units: '%'
+
+leaf_charging:
+  widget_type: switch
+  entity: switch.leaf_charging_status 
+  icon_on: mdi-battery-charging
+  icon_off: mdi-power-plug-off
+  title: Leaf Charging
+
+leaf_battery:
+  high_color: '#00FF00'
+  med_color: '#FFFF00'
+  low_color: '#FF0000'
+  color: '#FFFFFF'
+  widget_type: gauge
+  min: 0
+  max: 100
+  entity: sensor.leaf_charge
+  precision: 1
+  title: Leaf Battery
+  units: '%'
+
+# Fix me, this used to use the dark sky sensor summary
 forecast:
   widget_type: sensor
-  entity: sensor.dark_sky_daily_summary
+  entity: weather.dark_sky
   widget_style: "background-color: #6d8764; font-weight:bold;"
 
 trash_day:
   title: Trash Day
-  widget_type: binary_sensor
+  widget_type: switch
   icon_on: mdi-delete-empty
   icon_off: mdi-cancel
-  entity: binary_sensor.trash
+  entity: input_boolean.take_out_trash
 
 solar_live:
   low_color: '#00FF00'
@@ -87,7 +149,7 @@ solar_today:
   title: Solar Today
   units: kWh
   value_style: "color: white"
-  unit_style: "color: white"
+  unit_style: "color: white" 
 
 solar_month:
   widget_type: sensor
@@ -96,7 +158,7 @@ solar_month:
   title: Solar Month
   units: kWh
   value_style: "color: white"
-  unit_style: "color: white"
+  unit_style: "color: white" 
 
 harvard_traffic:
   widget_type: sensor
@@ -106,7 +168,7 @@ harvard_traffic:
   widget_style: "background-color: #a20025; color: white"
   title_style: "color: white"
   value_style: "color: white"
-  unit_style: "color: white"
+  unit_style: "color: white" 
 
 boston_traffic:
   widget_type: sensor
@@ -116,7 +178,7 @@ boston_traffic:
   widget_style: "background-color: #0050ef; color: white"
   title_style: "color: white"
   value_style: "color: white"
-  unit_style: "color: white"
+  unit_style: "color: white" 
 
 stephen_presence:
   widget_type: device_tracker
@@ -127,7 +189,7 @@ stephen_presence:
   icon_style_inactive: "color: white;"
   icon_on: "mdi-account"
   icon_off: "mdi-account-outline"
-
+ 
 felipe_presence:
   widget_type: device_tracker
   title: Felipe
@@ -179,35 +241,57 @@ dining_room:
   icon_on: mdi-lightbulb-on
 
 sunroom:
-  title: Sun Room
+  title: Sunroom 
   widget_type: switch
   entity: switch.sunroom_main_lights
   icon_off: mdi-lightbulb
   icon_on: mdi-lightbulb-on
 
-bathroom:
-  title: Bathroom
+sunroom_star:
+  title: Sunroom Star
   widget_type: light
-  entity: light.bathroom
+  entity: light.sunroom_star 
+  icon_off: mdi-star
+  icon_on: mdi-star
+  icon_style_active: "color: red;"
+
+bathroom:
+  title: Bathroom 
+  widget_type: light
+  entity: light.main_bathroom_vanity_lights
   icon_off: mdi-lightbulb
   icon_on: mdi-lightbulb-on
 
+bathroom_fan:
+  title: Bathroom Fan
+  widget_type: switch
+  entity: switch.main_bathroom_exhaust_fan
+  icon_on: mdi-fan
+  icon_off: mdi-fan-off
+
 office:
-  title: Office
+  title: Office 
   widget_type: light
-  entity: light.office_floor_lamp
+  entity: light.office_floor_lamp 
+  icon_off: mdi-lightbulb
+  icon_on: mdi-lightbulb-on
+
+bedroom:
+  title: Bedroom 
+  widget_type: light
+  entity: light.bedroom
   icon_off: mdi-lightbulb
   icon_on: mdi-lightbulb-on
 
 livingroom:
-  title: Living Room
+  title: Living Room 
   widget_type: light
-  entity: light.living_room_floor_lamp
+  entity: light.living_room_floor_lamp 
   icon_off: mdi-lightbulb
   icon_on: mdi-lightbulb-on
 
 basement_stairs:
-  title: Basement Stairs
+  title: Basement Stairs 
   widget_type: light
   entity: light.basement
   icon_off: mdi-lightbulb
@@ -233,13 +317,6 @@ dinner_time:
   icon_on: mdi-silverware-variant
   icon_off: mdi-silverware-variant
   title: Dinner Time
-
-movie_time:
-  widget_type: scene
-  entity: scene.movie
-  icon_on:  mdi-movie-roll
-  icon_off: mdi-movie-roll
-  title: Movie Time
 
 lights_out:
   title: Lights Out
@@ -274,11 +351,26 @@ guest_mode:
   icon_off: mdi-home
   icon_style_active: "color: #1ba1e2;"
 
+light_dash:
+  title: More
+  widget_type: navigate
+  dashboard: Light
+  icon_inactive: mdi-arrow-right
+  widget_style: "background: #76608a;"
+
+sunroom_heater:
+  title: Sunroom Heater
+  widget_type: switch
+  entity: switch.sunroom_heater 
+  icon_on: mdi-fire 
+  icon_off: mdi-fire
+
 layout:
  #    |            |             |            |            |            |           |             |                |
-    - forecast(2x1),              trash_day(1x1), clock(2x1),            sidedoor_lock(1x1), frontdoor_lock(1x1), basement_lock(1x1)
-    - weather(2x2),               guest_mode(1x1), thermostat(2x1),      radar(3x2)
-    -                             felipe_presence(1x1), stephen_presence(1x1), guest_home(1x1)
-    - exterior_lights(2x1), dinner_time(2x1), movie_time(2x1), lights_out(2x1)
-    - kitchen_lights(1x1), dining_room(1x1), sunroom(1x1), livingroom(1x1), basement_stairs(1x1), hallway(1x1), bathroom(1x1), office(1x1)
-    - spacer(3x1), solar_live(1x1), solar_today(1x1), solar_month(1x1), harvard_traffic(1x1), boston_traffic(1x1)
+    - forecast(2x1),              thermostat(1x1),           clock(2x1), sidedoor_lock(1x1), frontdoor_lock(1x1), basement_lock(1x1)
+    - radar(3x2),                              sunrise(1x1), camera(4x3)
+    -                                          sunset(1x1)
+    - lights_out(1x1), exterior_lights(1x1), dinner_time(1x1), livingroom(1x1)
+    - sunroom(1x1), sunroom_heater(1x1), basement_stairs(1x1), hallway(1x1), bathroom(1x1), kitchen_lights(1x1), light_dash(2x1)
+    - grid_status(1x1), home_power(1x1), solar_live(1x1), solar_today(1x1), powerwall_battery(1x1), leaf_climate(1x1), leaf_battery(1x1), trash_day(1x1)
+
