@@ -1,0 +1,53 @@
+automation:
+  - alias: Living Room Pico 3, Button OFF
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_pico_3
+        to: '4'
+    condition:
+      - condition: state
+        entity_id: light.living_room_floor_lamp
+        state: "off"
+    action:
+      - service: light.turn_off
+        data:
+          entity_id: light.dining_room_main_lights
+      - service: light.turn_off
+        data:
+          entity_id: light.kitchen_main_lights
+
+  - alias: Living Room Pico 1, Button FAV
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_pico_1
+        to: '2'
+    action:
+      - delay: 00:00:01
+      - service: light.turn_on
+        data:
+          entity_id: light.living_room_floor_lamp
+          brightness: 24
+
+  - alias: Living Room Pico 2, Button FAV
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_pico_2
+        to: '2'
+    action:
+      - delay: 00:00:01
+      - service: light.turn_on
+        data:
+          entity_id: light.living_room_floor_lamp
+          brightness: 24
+
+  - alias: Living Room Pico 3, Button FAV
+    trigger:
+      - platform: state
+        entity_id: sensor.living_room_pico_3
+        to: '2'
+    action:
+      - delay: 00:00:01
+      - service: light.turn_on
+        data:
+          entity_id: light.living_room_floor_lamp
+          brightness: 24

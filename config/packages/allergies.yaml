@@ -1,0 +1,21 @@
+iqvia:
+  zip_code: "02101"
+  monitored_conditions:
+    - allergy_average_forecasted
+    - allergy_index_today
+    - allergy_index_tomorrow
+    - disease_average_forecasted
+
+automation:
+  - alias: "Allergy pill reminder"
+    trigger:
+      platform: time
+      at: '07:30:00'
+    condition:
+      condition: numeric_state
+      entity_id: sensor.allergy_index_today
+      above: 4
+    action:
+      - service: notify.ios_stephen
+        data:
+          message: Did you take your allergy pill today?

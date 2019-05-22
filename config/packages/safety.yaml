@@ -1,0 +1,46 @@
+binary_sensor:
+  - platform: template
+    sensors:
+      emergency:
+        friendly_name: "Emergency"
+        value_template: >-
+          # Master Bedroom Nest
+          {% if is_state("sensor.master_bedroom_nest_protect_color_status", "red") %}
+            true
+          {% elif is_state("sensor.master_bedroom_nest_protect_color_status", "yellow") %}
+            true
+          # Basement Nest
+          {% elif is_state("sensor.basement_nest_protect_color_status_2", "red") %}
+            true
+          {% elif is_state("sensor.basement_nest_protect_color_status_2", "yellow") %}
+            true
+          # Hallway Nest
+          {% elif is_state("sensor.hallway_nest_protect_color_status", "red") %}
+            true
+          {% elif is_state("sensor.hallway_nest_protect_color_status", "yellow") %}
+            true
+          {% endif %}
+        device_class: safety
+        entity_id:
+          - sensor.master_bedroom_nest_protect_color_status
+          - sensor.basement_nest_protect_color_status_2
+          - sensor.hallway_nest_protect_color_status
+
+automation:
+  - alias: Emergency Actions - Someone Home
+    trigger:
+      platform: state
+      entity_id: binary_sensor.emergency
+      to: 'on'
+    condition:
+      condition: or
+      conditions:
+        - condition: state
+          entity_id: group.all_devices
+          state: 'home'
+        - condition: state
+          entity_id: input_select.house_mode
+          state: 'guest'
+    action:
+      - service: lock.unlock
+        entity_id: group.all_locks

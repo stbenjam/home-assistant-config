@@ -26,7 +26,7 @@ sensor:
           {% else %}
             mdi:battery-outline
           {% endif %}
-        entity_id: zwave.zooz_zse40_4in1_sensor_4 
+        entity_id: zwave.zooz_zse40_4in1_sensor_4
 
 binary_sensor:
   - platform: template
@@ -43,25 +43,25 @@ automation:
       platform: state
       entity_id: binary_sensor.kitchen_motion
       from: 'off'
-      to: 'on' 
+      to: 'on'
     condition:
       condition: and
       conditions:
         - condition: numeric_state
-          entity_id: sensor.zooz_zse40_4in1_sensor_luminance_3 
+          entity_id: sensor.zooz_zse40_4in1_sensor_luminance_3
           below: 20
         - condition: state
-          entity_id: light.dining_room_main_lights 
+          entity_id: light.dining_room_main_lights
           state: 'off'
         - condition: state
-          entity_id: light.kitchen_main_lights 
+          entity_id: light.kitchen_main_lights
           state: 'off'
     action:
-      - service: light.turn_on 
+      - service: light.turn_on
         data:
           entity_id: light.kitchen_main_lights
           brightness_pct: 25
-      - service: light.turn_on 
+      - service: light.turn_on
         data:
           entity_id: light.dining_room_main_lights
           brightness_pct: 15
@@ -73,20 +73,20 @@ automation:
       from: 'on'
       to: 'off'
       for:
-        minutes: 30 
+        minutes: 30
     condition:
       condition: or
       conditions:
         - condition: state
-          entity_id: light.dining_room_main_lights 
+          entity_id: light.dining_room_main_lights
           state: 'on'
         - condition: state
-          entity_id: light.kitchen_main_lights 
+          entity_id: light.kitchen_main_lights
           state: 'on'
     action:
-      - service: light.turn_off 
+      - service: light.turn_off
         data:
           entity_id: light.kitchen_main_lights
-      - service: light.turn_off 
+      - service: light.turn_off
         data:
           entity_id: light.dining_room_main_lights

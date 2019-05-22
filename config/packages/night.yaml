@@ -1,26 +1,85 @@
 input_boolean:
-  night_mode:
-    name: Night Mode
-    icon: mdi:weather-night
-    initial: false
+  good_night:
+    name: "Good night"
 
 automation:
-- alias: Night Mode - On 
-  trigger:
-    platform: time
-    at: '22:00:00'
-  action:
-  - data:
-      entity_id:
-        - input_boolean.night_mode 
-    service: input_boolean.turn_on
+  # GOOD NIGHT
+  - alias: Good Night
+    trigger:
+      platform: state
+      entity_id: input_boolean.good_night
+      to: 'on'
+    action:
+      service: script.turn_on
+      data:
+        entity_id: script.good_night
 
-- alias: Night Mode - Off 
-  trigger:
-    platform: time
-    at: '22:00:00'
-  action:
-  - data:
-      entity_id:
-        - input_boolean.night_mode 
-    service: input_boolean.turn_off
+  # NIGHT MODE
+  - alias: Night Mode - On
+    trigger:
+      platform: time
+      at: '22:00:00'
+    action:
+      data:
+        entity_id: input_select.house_mode
+        option: night
+      service: input_select.select_option
+
+  #- alias: Night Mode - Off
+  #  trigger:
+  #    platform: template
+  #    value_template: '{{ states.sensor.time.state == states.input_datetime.alarm_time.state[0:5] }}'
+  #  action:
+  #    data:
+  #      entity_id: input_select.house_mode
+  #      option: home
+  #    service: input_select.select_option
+
+  - alias: Night Mode - Off at First Motion
+    trigger:
+      platform: state
+      entity_id: binary_sensor.kitchen_motion
+      from: 'off'
+      to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: time
+          after: '04:30:00'
+          before: '11:00:00'
+        - condition: state
+          entity_id: input_select.house_mode
+          state: night
+    action:
+      data:
+        entity_id: input_select.house_mode
+        option: home
+      service: input_select.select_option
+
+script:
+  good_night:
+    sequence:
+      - service: cover.close_cover
+        entity_id: cover.bedroom_shades
+      - service: light.turn_off
+        entity_id: group.away_lights
+      - service: switch.turn_off
+        entity_id: group.away_switches
+      - service: lock.lock
+        entity_id: group.all_locks
+
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.night_mode
+          option: night
+
+      - service: input_boolean.turn_off
+        entity_id: input_boolean.good_night
+
+      # Turn on air filter when allergy index is medium or higher
+      - condition: numeric_state
+        entity_id: sensor.allergy_index_today
+        above: 3.0
+
+      - service: switch.turn_on
+        entity_id: switch.air_filter

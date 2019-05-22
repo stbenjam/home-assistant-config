@@ -1,0 +1,50 @@
+homekit:
+  auto_start: false
+  ip_address: X.X.X.X
+  entity_config:
+    lock.assa_abloy_unknown_type0004_idaa00_locked_3:
+      code: 1234
+    lock.schlage_allegion_be469_touchscreen_deadbolt_locked:
+      code: 1234
+    lock.schlage_be469_touchscreen_deadbolt_locked:
+      code: 1234
+  filter:
+    include_domains:
+      - lock
+      - light
+      - switch
+      - cover
+      - climate
+#    exclude_domains:
+#      - automation
+#      - binary_sensor
+#      - sensor
+#      - input_boolean
+#      - input_number
+#      - climate
+#      - group
+#      - media_player
+#      - device_tracker
+#      - scene
+#      - script
+    exclude_entities:
+      - light.sunroom
+      - light.br1
+      - light.br2
+      - light.br3
+      - light.bath1
+      - light.bath2
+      - light.bath3
+      - light.living_room # Hue group
+
+automation:
+  - alias: 'Start HomeKit'
+    trigger:
+      - platform: event
+        event_type: zwave.network_ready
+      - platform: event
+        event_type: zwave.network_complete
+      - platform: event
+        event_type: zwave.network_complete_some_dead
+    action:
+      - service: homekit.start

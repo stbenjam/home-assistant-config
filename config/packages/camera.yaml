@@ -1,0 +1,119 @@
+input_boolean:
+   camera_alerts:
+    name: Camera Alerts
+    icon: mdi:bell
+
+image_processing:
+  - platform: tensorflow
+    source:
+      - entity_id: camera.rear_2
+      - entity_id: camera.front_2
+    model:
+      graph: /config/tensorflow/frozen_inference_graph.pb
+      categories:
+        - category: person
+          area:
+            top: 0.3
+    file_out:
+      - "/config/cameras/{{ camera_entity.split('.')[1] }}_latest.jpg"
+
+binary_sensor:
+  - platform: template
+    sensors:
+      front_person_detected:
+        friendly_name: "Person Detected - Front"
+        value_template: "{{ state_attr('image_processing.tensorflow_front_2', 'matches').person|map(attribute='score')|map('float')|reject('<', 92)|list|length > 0 }}"
+        device_class: motion
+        entity_id: image_processing.tensorflow_front_2
+      rear_person_detected:
+        friendly_name: "Person Detected - Rear"
+        value_template: "{{ state_attr('image_processing.tensorflow_rear_2', 'matches').person|map(attribute='score')|map('float')|reject('<', 92)|list|length > 0 }}"
+        device_class: motion
+        entity_id: image_processing.tensorflow_rear_2
+stream:
+camera:
+  - platform: generic
+    still_image_url: "http://X.X.X.X:7080/api/2.0/snapshot/camera/5bc243f4e4b0982f42fac121?force=true&apiKey=dLU4EkvQjEDHsRZGxMxGRGf9HbbG6jOu"
+    stream_source: "rtsp://X.X.X.X:7447/5bc243f4e4b0982f42fac121_0"
+    name: Front
+  - platform: generic
+    still_image_url: "http://X.X.X.X:7080/api/2.0/snapshot/camera/5bc7370be4b03c1a4098f854?force=true&apiKey=dLU4EkvQjEDHsRZGxMxGRGf9HbbG6jOu"
+    stream_source: "rtsp://X.X.X.X:7447/5bc7370be4b03c1a4098f854_0"
+    name: Rear
+  - platform: uvc
+    nvr: X.X.X.X
+    key: !secret unifi_video_key
+    password: !secret unifi_camera
+  - platform: local_file
+    file_path: "/config/cameras/front_2_latest.jpg"
+    name: "Front Event"
+  - platform: local_file
+    file_path: "/config/cameras/rear_2_latest.jpg"
+    name: "Rear Event"
+
+automation:
+  - alias: Turn Camera Alerts On
+    trigger:
+      platform: state
+      entity_id: input_boolean.camera_alerts
+      to: 'off'
+      for:
+        hours: 8
+    action:
+      - service: input_boolean.turn_on
+        data:
+          entity_id: input_boolean.camera_alerts
+
+  - alias: Person Detected - Front
+    trigger:
+      platform: state
+      entity_id: binary_sensor.front_person_detected
+      to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_boolean.camera_alerts
+          state: 'on'
+        - condition: template
+          value_template: >
+            {%- if states.automation.person_detected_front.attributes.last_triggered -%}
+              {{ (as_timestamp(now()) - as_timestamp(states.automation.person_detected_front.attributes.last_triggered)) > 60 }}
+            {%- else -%}
+              true
+            {%- endif -%}
+    action:
+      - service: notify.mail_all
+        data:
+          title: 'Front Camera - Person Detected'
+          message: 'A person was detected on the front camera.'
+          data:
+            images:
+              - "/config/cameras/front_2_latest.jpg"
+
+  - alias: Person Detected - Rear
+    trigger:
+      platform: state
+      entity_id: binary_sensor.rear_person_detected
+      to: 'on'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: input_boolean.camera_alerts
+          state: 'on'
+        - condition: template
+          value_template: >
+            {%- if states.automation.person_detected_rear.attributes.last_triggered -%}
+              {{ (as_timestamp(now()) - as_timestamp(states.automation.person_detected_rear.attributes.last_triggered)) > 60 }}
+            {%- else -%}
+              true
+            {%- endif -%}
+    action:
+      - service: notify.mail_all
+        data:
+          title: 'Rear Camera - Person Detected'
+          message: 'A person was detected on the rear camera.'
+          data:
+            images:
+              - "/config/cameras/rear_2_latest.jpg"

@@ -1,23 +1,14 @@
-input_boolean:
-  guest_mode:
-    name: Guest Mode
-    icon: mdi:account-multiple
-    initial: false
-  is_away:
-    name: Away Mode
-    icon: mdi:home
-
 device_tracker:
   - platform: unifi
     host: !secret unifi_controller
     verify_ssl: false
     username: hass
     password: !secret unifi
-    interval_seconds: 22 
+    interval_seconds: 30
     new_device_defaults:
       track_new_devices: True
       hide_if_away: True
-    detection_time: 300
+    detection_time: 800
     ssid_filter:
       - "Test LAN - Please Ignore"
       - "Guest WiFi"
@@ -37,7 +28,65 @@ sensor:
         entity_id: !include ../people.yaml
 
 automation:
-  # Home Boolean
+  - alias: 'Arrival Mode'
+    trigger:
+      platform: time
+      at: '16:00:00'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: 'binary_sensor.workday_sensor'
+          state: 'on'
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'home') }}"
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'vacation') }}"
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'guest') }}"
+    action:
+      service: notify.ios_iphone
+      data:
+        message: "Are you on your way home?"
+        data:
+          push:
+            badge: 0
+            category: "arriving"
+
+  - alias: Set Arrival
+    trigger:
+      platform: event
+      event_type: ios.notification_action_fired
+      event_data:
+        actionName: SET_ARRIVING
+    action:
+      service: input_select.select_option
+      data:
+        entity_id: input_select.house_mode
+        option: arriving
+
+  - alias: 'Arrival - Climate'
+    trigger:
+      platform: state
+      entity_id: input_select.house_mode
+      to: 'arriving'
+    action:
+      service: climate.set_away_mode
+      data:
+        entity_id: climate.thermostat
+        away_mode: false
+
+  - alias: 'Arrival - Notify'
+    trigger:
+      platform: state
+      entity_id: input_select.house_mode
+      to: 'arriving'
+    action:
+      service: notify.notify
+      data_template:
+        message: "Home set to 'arriving'. Heat/AC is on. See you soon!"
+
+  #######################################################
   - alias: 'Set Away Mode'
     trigger:
       platform: state
@@ -45,21 +94,37 @@ automation:
       to: 'not_home'
     # Do not set this if GUEST MODE is enabled
     condition:
-      condition: state
-      entity_id: input_boolean.guest_mode
-      state: 'off'
+      condition: and
+      conditions:
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'guest') }}"
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'vacation') }}"
     action:
-      service: input_boolean.turn_on
-      entity_id: input_boolean.is_away
+      service: input_select.select_option
+      data:
+        entity_id: input_select.house_mode
+        option: away
 
   - alias: 'Set Home Mode'
     trigger:
       platform: state
       entity_id: group.all_devices
       to: 'home'
+    condition:
+      condition: and
+      conditions:
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'guest') }}"
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'vacation') }}"
+        - condition: template
+          value_template: "{{ not is_state('input_select.house_mode', 'night') }}"
     action:
-      service: input_boolean.turn_off
-      entity_id: input_boolean.is_away
+      service: input_select.select_option
+      data:
+        entity_id: input_select.house_mode
+        option: home
 
   ##########
   #  AWAY  #
@@ -68,8 +133,8 @@ automation:
   - alias: 'Notify When Away'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'on'
+      entity_id: input_select.house_mode
+      to: 'away'
     action:
       service: notify.notify
       data_template:
@@ -78,8 +143,8 @@ automation:
   - alias: 'Away Mode - Lock Doors'
     trigger:
       - platform: state
-        entity_id: input_boolean.is_away
-        to: 'on'
+        entity_id: input_select.house_mode
+        to: 'away'
     action:
       service: lock.lock
       entity_id: group.all_locks
@@ -87,40 +152,40 @@ automation:
   - alias: 'Away Mode - Lights'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'on'
+      entity_id: input_select.house_mode
+      to: 'away'
     action:
       service: light.turn_off
-      entity_id: group.all_lights
+      entity_id: group.away_lights
 
   - alias: 'Away Mode - Switches'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'on'
+      entity_id: input_select.house_mode
+      to: 'away'
     action:
       service: switch.turn_off
-      entity_id: group.all_switches
+      entity_id: group.away_switches
 
-  - alias: 'Away Mode - Nest'
+  - alias: 'Away Mode - Climate'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'on'
+      entity_id: input_select.house_mode
+      to: 'away'
     action:
       service: climate.set_away_mode
       data:
-        entity_id: climate.hallway
+        entity_id: climate.thermostat
         away_mode: true
 
   - alias: 'Away Mode - TV'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'on'
+      entity_id: input_select.house_mode
+      to: 'away'
     action:
       service: rest_command.basement_tv_power_off
-  
+
   - alias: 'Office When Stephen Not Home'
     trigger:
     - entity_id: device_tracker.stephensiphone
@@ -149,7 +214,7 @@ automation:
         to: 'home'
     action:
       - service: lock.unlock
-        entity_id: lock.schlage_be469_touchscreen_deadbolt_locked 
+        entity_id: lock.schlage_be469_touchscreen_deadbolt_locked
     condition:
       condition: state
       entity_id: lock.schlage_be469_touchscreen_deadbolt_locked
@@ -158,7 +223,7 @@ automation:
   - alias: 'Notify When Home'
     trigger:
       platform: state
-      entity_id: !include ../people.yaml 
+      entity_id: !include ../people.yaml
       to: 'home'
     action:
       service_template: >
@@ -173,36 +238,36 @@ automation:
         message: >
           {{ trigger.to_state.attributes.friendly_name }} is home!
 
-  - alias: 'Home Mode - Nest'
+  - alias: 'Home Mode - Climate'
     trigger:
       platform: state
-      entity_id: input_boolean.is_away
-      to: 'off'
+      entity_id: input_select.house_mode
+      to: 'home'
     action:
       service: climate.set_away_mode
       data:
-        entity_id: climate.hallway
+        entity_id: climate.thermostat
         away_mode: false
 
   - alias: 'Home Mode - Lights'
     trigger:
       platform: state
-      entity_id: !include ../people.yaml 
+      entity_id: !include ../people.yaml
       to: 'home'
     condition:
       condition: sun
       after: sunset
       before_offset: "-01:00:00"
     action:
-      - service: switch.turn_on 
+      - service: switch.turn_on
         data:
-          entity_id: switch.back_entry_sconces 
-      - service: light.turn_on 
+          entity_id: switch.back_entry_sconces
+      - service: light.turn_on
         data:
           entity_id: light.kitchen_main_lights
           brightness_pct: 25
-      - service: light.turn_on 
+      - service: light.turn_on
         data:
-          entity_id: light.front_door_light 
+          entity_id: light.front_door_light
           brightness_pct: 50
 

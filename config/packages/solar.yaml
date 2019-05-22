@@ -5,13 +5,29 @@
 #       - SolarEdge Inverter
 #       - Tesla Powerwall 2
 #
-# Neither my inverter nor the powerwall provide the ability to provide total
-# daily home energy usage, although the Tesla app is capable of displaying that
-# information.  I have some hacky ways that estimates usage based on the
-# samples taken from home power.
-#
 # I also have sensors for sunrise/sunset, which I display on my Solar tab in
 # the UI.
+
+utility_meter:
+  home_usage_daily:
+    source: sensor.home_usage
+    cycle: daily
+  home_usage_monthly:
+    source: sensor.home_usage
+    cycle: monthly
+  home_usage_yearly:
+    source: sensor.home_usage
+    cycle: monthly
+
+  grid_daily:
+    source: sensor.grid_net
+    cycle: daily
+  grid_monthly:
+    source: sensor.grid_net
+    cycle: monthly
+  grid_yearly:
+    source: sensor.grid_net
+    cycle: yearly
 
 sensor:
   # Tesla Powerwall 2 Sensors
@@ -26,7 +42,6 @@ sensor:
     unit_of_measurement: 'kW'
     scan_interval: 120
     verify_ssl: false
-    icon_template: mdi:flash
 
   - platform: rest
     name: 'Solar Power'
@@ -36,7 +51,6 @@ sensor:
     unit_of_measurement: 'kW'
     scan_interval: 120
     verify_ssl: false
-    icon_template: mdi:weather-sunny
 
   - platform: rest
     name: 'Powerwall Power'
@@ -46,12 +60,6 @@ sensor:
     unit_of_measurement: 'kW'
     scan_interval: 240
     verify_ssl: false
-    icon_template: >-
-      {%- if states('sensor.powerwall_power') | float > 0 %}
-      mdi:battery
-      {%- else %}
-      mdi:battery-charging
-      {%- endif %}
 
   - platform: rest
     name: 'Home Power'
@@ -59,20 +67,8 @@ sensor:
     resource: !secret powerwall_aggregates
     value_template: '{{ (value_json.load.instant_power | float / 1000) | round(2) }}'
     unit_of_measurement: 'kW'
-    scan_interval: 120
+    scan_interval: 60
     verify_ssl: false
-
-    # Powerwall UI has no way to return the usage, so we estimate it based on
-    # 2-minute samples take by above sensor.  It should be close to what the
-    # app reports.
-  - platform: template
-    sensors:
-      home_energy_consumption:
-        friendly_name: 'Home Energy Consumption'
-        icon_template: mdi:gauge
-        unit_of_measurement: 'kWh'
-        entity_id: input_number.home_usage 
-        value_template: "{{ states('input_number.home_usage') | float | round(2) }}"
 
   - platform: rest
     name: 'Powerwall Battery'
@@ -82,29 +78,18 @@ sensor:
     unit_of_measurement: '%'
     scan_interval: 300
     verify_ssl: false
-    icon_template: >-
-      {%- set battery = states('sensor.powerwall_battery') | float %}
-      {%- if battery > 90 %}
-      mdi:battery
-      {%- elif battery > 80 %}
-      mdi:battery-90
-      {%- elif battery > 70 %}
-      mdi:battery-80
-      {%- elif battery > 60 %}
-      mdi:battery-70
-      {%- elif battery > 50 %}
-      mdi:battery-60
-      {%- elif battery > 40 %}
-      mdi:battery-50
-      {%- elif battery > 30 %}
-      mdi:battery-40
-      {%- elif battery > 20 %}
-      mdi:battery-30
-      {%- elif battery > 10 %}
-      mdi:battery-20
-      {%- else %}
-      mdi:battery-outline
-      {%- endif %}
+
+  - platform: integration
+    name: home_usage
+    source: sensor.home_power
+    unit: kWh
+    round: 2
+
+  - platform: integration
+    name: grid_net
+    source: sensor.grid_power
+    round: 2
+    unit: kWh
 
   # SolarEdge Inverter
   #   The overview url should be:
@@ -167,13 +152,7 @@ binary_sensor:
     method: GET
     name: Grid Status
     scan_interval: 60
-    value_template: "{{ value_json.grid_status == 'SystemGridConnected' }}"
-    icon_template: >-
-      {%- if is_state('binary_sensor.grid_status', 'on') %}
-        mdi:flash
-      {%- else %}
-        mdi:flash-off
-      {%- endif %}
+    value_template: "{{ value_json.grid_status != 'SystemIslandedActive' }}"
 
 input_number:
   # This tracks the peak production value of the solar per day.  Resets at
@@ -183,20 +162,6 @@ input_number:
     min: 0.0
     max: 8.85
     unit_of_measurement: kW
-
-  # Estimate home usage - variables to calculate usage:
-  home_usage:
-    name: Home Usage in kWh
-    min: 0
-    max: 1000 
-  home_usage_total:
-    name: Home Usage Total
-    min: 0
-    max: 2000000
-  home_usage_measurements:
-    name: Home Usage Measurements
-    min: 0
-    max: 1440
 
 history_graph:
   solar:
@@ -236,56 +201,10 @@ automation:
       data_template:
         message: script.grid_restored 
 
-  # Hacks to estimate home power consumption:
-  - alias: 'Calculate Home Usage'
-    trigger:
-      platform: state
-      entity_id: sensor.home_power
-    action:
-      - service: input_number.set_value
-        data_template:
-          entity_id: input_number.home_usage_total
-          value: "{{ (states('input_number.home_usage_total') | float) + states('sensor.home_power') | float }}"
-      - service: input_number.set_value
-        data_template:
-          entity_id: input_number.home_usage_measurements
-          value: "{{ (states('input_number.home_usage_measurements') | float) + 1 }}"
-      - service: input_number.set_value
-        data_template:
-          entity_id: input_number.home_usage
-          value: "{{ ((states('input_number.home_usage_total') | float) / (states('input_number.home_usage_measurements') | float)) * ((states('input_number.home_usage_measurements') | float) * 2 / 60) }}"
-
-
-  - alias: "Reset Home Usage Measurements"
-    trigger: 
-      platform: time
-      hours: 0
-      minutes: 0
-      seconds: 0
-    action:
-      service: input_number.set_value
-      data:
-        entity_id: input_number.home_usage_measurements
-        value: 0
-
-  - alias: "Reset Home Usage Total"
-    trigger: 
-      platform: time
-      hours: 0
-      minutes: 0
-      seconds: 0
-    action:
-      service: input_number.set_value
-      data:
-        entity_id: input_number.home_usage_total
-        value: 0
-
   - alias: "Reset Solar Max"
     trigger: 
       platform: time
-      hours: 0
-      minutes: 0
-      seconds: 0
+      at: '00:00:00'
     action:
       service: input_number.set_value
       data:
@@ -321,10 +240,15 @@ script:
         data_template:
           message: "Power outage detected! Now operating on battery/solar only. Conserve power!"
 
-      # Turn off high-powered items
+      # Turn off all lights / switches to conserve power, occupants can turn on
+      # lights that need to go on
       - service: switch.turn_off
         data:
-          entity_id: switch.sunroom_heater
+          entity_id: group.all_switches
+      - service: light.turn_off
+        data:
+          entity_id: group.all_lights
+
   grid_restored:
     sequence:
       - service: persistent_notification.dismiss

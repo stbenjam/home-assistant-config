@@ -1,0 +1,150 @@
+input_select:
+  bedroom_scene:
+    icon: mdi:radar 
+    name: Scene
+    options:
+      - "-- Select Scene --"
+      - Savanna sunset 
+      - Tropical twilight
+      - Arctic aurora
+      - Spring blossom
+      - Relax
+      - Read
+      - Concentrate
+      - Energize
+      - Bright
+      - Dimmed
+      - Nightlight
+    initial: "-- Select Scene --"
+
+cover:
+  - platform: group
+    name: "Bedroom Shades"
+    entities:
+      - cover.master_bedroom_left
+      - cover.master_bedroom_front
+
+automation:
+  - alias: Scene
+    trigger:
+      - platform: state
+        entity_id: input_select.bedroom_scene
+    condition:
+      - condition: template
+        value_template: "{{ not is_state('input_select.bedroom_scene', '-- Select Scene --') }}"
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.bedroom_scene
+
+# PICO REMOTE 1 - STEPHEN
+  - alias: Bedroom Pico 1, Button 1
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_1
+        to: '1'
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.master_bedroom_cycle_lights
+
+  - alias: Bedroom Pico 1, Button 4
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_1
+        to: '8'
+    action:
+      - service: light.turn_off 
+        data:
+          entity_id: light.bedroom 
+
+  - alias: Bedroom Pico 1, Button 3
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_1
+        to: '4'
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.good_night
+
+  - alias: Bedroom Pico 1, Button 2
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_1
+        to: '2'
+    action:
+      - service: switch.toggle
+        data:
+          entity_id: switch.white_noise_machine 
+
+# PICO REMOTE 2 - FELIPE
+  - alias: Bedroom Pico 2, Button 1
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_2
+        to: '1'
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.master_bedroom_cycle_lights
+
+  - alias: Bedroom Pico 2, Button 4
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_2
+        to: '8'
+    action:
+      - service: light.turn_off 
+        data:
+          entity_id: light.bedroom 
+
+  - alias: Bedroom Pico 2, Button 2
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_2
+        to: '2'
+    action:
+      - service: switch.toggle
+        data:
+          entity_id: switch.white_noise_machine 
+
+  - alias: Bedroom Pico 2, Button 3
+    trigger:
+      - platform: state
+        entity_id: sensor.master_bedroom_pico_2
+        to: '4'
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.good_night
+
+script:
+  # Cycle through brightness levels, including off
+  master_bedroom_cycle_lights:
+    sequence:
+      - service: light.turn_on
+        data_template:
+          entity_id: light.bedroom
+          brightness: >-
+            {% if (state_attr('light.bedroom', 'brightness') | int) >= 254 %}
+            0
+            {% elif (state_attr('light.bedroom', 'brightness') | int) >= 96 %}
+            254
+            {% elif (state_attr('light.bedroom', 'brightness') | int) >= 48 %}
+            96 
+            {% elif (state_attr('light.bedroom', 'brightness') | int) >= 16 %}
+            48
+            {% else %}
+            16
+            {% endif %}
+  bedroom_scene:
+    sequence:
+      - service: hue.hue_activate_scene
+        data_template:
+          group_name: "Bedroom"
+          scene_name: "{{ states('input_select.bedroom_scene') }}"
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.bedroom_scene
+          option: "-- Select Scene --"

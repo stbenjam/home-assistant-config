@@ -1,0 +1,8 @@
+switch:
+  - platform: wake_on_lan
+    mac_address:
+    host: X.X.X.X
+    broadcast_address: X.X.X.X
+    turn_off:
+      service: shell_command.turn_off_desktop
+    name: Desktop Computer

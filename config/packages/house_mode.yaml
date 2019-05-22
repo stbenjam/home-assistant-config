@@ -1,0 +1,71 @@
+input_select:
+  house_mode:
+    icon: mdi:house
+    name: House Mode
+    options:
+      - home
+      - away
+      - night
+      - arriving
+      - guest
+      - vacation
+
+sensor:
+  - platform: template
+    sensors:
+      house_mode:
+        friendly_name: "House Mode"
+        value_template: "{{ states('input_select.house_mode') | title }}"
+        entity_id: input_select.house_mode
+        icon_template: >-
+          {% if is_state('input_select.house_mode', 'home') %}
+            mdi:home
+          {% elif is_state('input_select.house_mode', 'away') %}
+            mdi:home-outline
+          {% elif is_state('input_select.house_mode', 'night') %}
+            mdi:weather-night
+          {% elif is_state('input_select.house_mode', 'arriving') %}
+            mdi:car
+          {% elif is_state('input_select.house_mode', 'guest') %}
+            mdi:account-multiple
+          {% elif is_state('input_select.house_mode', 'vacation') %}
+            mdi:beach
+          {% endif %}
+
+script:
+  vacation_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: vacation
+  guest_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: guest
+  away_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: away
+  home_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: home
+  arriving_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: arriving
+  night_mode:
+    sequence:
+      - service: input_select.select_option
+        data:
+          entity_id: input_select.house_mode
+          option: night

@@ -1,0 +1,16 @@
+rest_command:
+  basement_tv_power_off:
+    url: http://X.X.X.X:8060/keypress/PowerOff
+    method: post
+  basement_tv_power_on:
+    url: http://X.X.X.X:8060/keypress/PowerOn
+    method: post
+
+switch:
+  - name: basement_tv
+    platform: wake_on_lan
+    mac_address: 
+    broadcast_address: X.X.X.X
+    host: X.X.X.X
+    turn_off:
+      service: rest_command.basement_tv_power_off

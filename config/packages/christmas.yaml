@@ -1,0 +1,47 @@
+input_boolean:
+  christmas_season:
+    name: "Christmas Season"
+
+automation:
+  - alias: Christmas Lights - Sunset
+    trigger:
+      platform: sun
+      event: sunset
+      offset: "+00:00:00"
+    condition:
+      - condition: state
+        entity_id: input_boolean.christmas_season
+        state: "on"
+    action:
+    - data:
+        entity_id:
+          - switch.ge_14284_outdoor_smart_switch_switch
+          - switch.christmas_window
+          - switch.christmas_tree
+      service: switch.turn_on
+
+  - alias: Christmas Lights - Off
+    trigger:
+      platform: time
+      at: '23:00:00'
+    condition:
+      - condition: state
+        entity_id: input_boolean.christmas_season
+        state: "on"
+    action:
+      service: switch.turn_off
+      data:
+        entity_id:
+          - switch.ge_14284_outdoor_smart_switch_switch
+          - switch.christmas_window
+          - switch.christmas_tree
+
+scene:
+  - name: Christmas
+    entities:
+      switch.ge_14284_outdoor_smart_switch_switch:
+        state: on
+      switch.christmas_window:
+        state: on
+      switch.christmas_tree:
+        state: on

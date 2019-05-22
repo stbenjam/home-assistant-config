@@ -26,7 +26,7 @@ sensor:
           {% else %}
             mdi:battery-outline
           {% endif %}
-        entity_id: zwave.zooz_zse40_4in1_sensor_3 
+        entity_id: zwave.zooz_zse40_4in1_sensor_3
 
 binary_sensor:
   - platform: template
@@ -40,27 +40,6 @@ binary_sensor:
         value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_relative_humidity_2') | float - states('sensor.hallway_thermostat_humidity') | float > 15 }}"
         friendly_name: "Shower On"
         entity_id: sensor.zooz_zse40_4in1_sensor_relative_humidity_2
-  - name: 'bathroom_occupied'
-    friendly_name: 'Bathroom Occupied'
-    platform: 'bayesian'
-    device_class: occupancy
-    prior: 0.25
-    probability_threshold: 0.8
-    icon: mdi:toilet
-    observations:
-      - entity_id: 'sensor.bathroom_motion'
-        prob_given_true: 0.80
-        prob_given_false: 0.20
-        platform: 'state'
-        to_state: 'on'
-      - entity_id: 'sensor.zooz_zse40_4in1_sensor_relative_humidity_2'
-        prob_given_true: 0.5
-        platform: 'numeric_state'
-        above: '80'
-      - entity_id: 'light.main_bathroom_vanity_lights'
-        prob_given_true: 0.5
-        platform: 'state'
-        to_state: 'on'
 
 automation:
   - alias: 'Bathroom Motion - Light On (Day)'
@@ -71,9 +50,8 @@ automation:
     condition:
       condition: and
       conditions:
-         - condition: state
-           entity_id: input_boolean.night_mode
-           state: 'off'
+         - condition: template
+           value_template: "{{ not is_state('input_select.house_mode', 'night') }}"
          - condition: state
            entity_id: light.main_bathroom_vanity_lights
            state: 'off'
@@ -93,8 +71,8 @@ automation:
       condition: and
       conditions:
          - condition: state
-           entity_id: input_boolean.night_mode
-           state: 'on'
+           entity_id: input_select.house_mode
+           state: 'night'
          - condition: state
            entity_id: light.main_bathroom_vanity_lights
            state: 'off'
@@ -114,7 +92,7 @@ automation:
         minutes: 15
     condition:
       condition: state
-      entity_id: switch.main_bathroom_exhaust_fan 
+      entity_id: switch.main_bathroom_exhaust_fan
       state: 'off'
     action:
       service: light.turn_off

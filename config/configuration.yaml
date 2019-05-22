@@ -1,5 +1,5 @@
 homeassistant:
-  name: Home 
+  name: Home
   latitude: !secret latitude
   longitude: !secret longitude
   elevation: 70
@@ -8,6 +8,8 @@ homeassistant:
   customize: !include customize.yaml
   packages: !include_dir_named packages
 
+mobile_app:
+
 #logger:
 #  default: debug
 
@@ -15,63 +17,104 @@ http:
   api_password: !secret http
   base_url: !secret url
 
+lovelace:
+  mode: yaml
+
 automation: !include_dir_merge_list automations
 cloud: !include cloud.yaml
 config:
 conversation:
 discovery:
+  ignore:
+    - roku
+    - apple_tv
 frontend:
   themes: !include themes.yaml
 group: !include groups.yaml
 history:
+
 ios:
+  push:
+    categories:
+      - name: arriving
+        identifier: 'arriving'
+        actions:
+          - identifier: 'SET_ARRIVING'
+            title: 'Yes'
 
 logbook:
 recorder:
   exclude:
     domains:
       - input_number
-      - zwave
   db_url: !secret db_url
 script: !include scripts.yaml
 shopping_list:
 sun:
 tts:
-  - platform: google
+  - platform: google_translate
+    service_name: google_say
 updater:
 
 nest:
   client_id: !secret nest_id
   client_secret: !secret nest_secret
 
-lutron_caseta:
-  host: !secret lutron_hub
-  keyfile: /config/certs/caseta.key
-  certfile: /config/certs/caseta.crt
-  ca_certs: /config/certs/caseta-bridge.crt
+climate:
+  - platform: venstar
+    host: X.X.X.X
+    ssl: false
+    timeout: 5
 
-switch:
-  - platform: tplink
-    host: IP 
-  - platform: tplink
-    host: IP 
-  - platform: tplink
-    host: IP 
+lutron_caseta_pro:
+    bridges:
+      - host: X.X.X.X
+        mac: 
+        switch: [ 8, 9, 10, 12, 18 ]
+        cover: [ 23, 24 ]
+
+alexa_media:
+  accounts:
+    - email: !secret amazon_user
+      password: !secret amazon_password
+      url: amazon.com
+
+tplink:
+  discovery: false
+  switch:
+    - host: X.X.X.X
+    - host: X.X.X.X
+#    - host: X.X.X.X
+#    - host: X.X.X.X
+#    - host: X.X.X.X
+    - host: X.X.X.X
+    - host: X.X.X.X
 
 camera:
   - platform: generic
     still_image_url: https://radblast.wunderground.com/cgi-bin/radar/WUNIDS_map?station=BOX
     name: Radar
-  - platform: uvc
-    nvr: IP 
-    key: !secret unifi_video_key
-    password: !secret unifi_camera
 
 sensor:
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+      - 'date_time'
+
   - platform: season
 
   - platform: uptime
     unit_of_measurement: minutes
+  - platform: template
+    sensors:
+      leaf_charge_time:
+        entity_id: sensor.leaf_charge
+        friendly_name: "LEAF Charge Time (6.6 kW)"
+        value_template: "{{(0.40 * (100-states('sensor.leaf_charge')|int)/6.6) | round(2)}}"
+        unit_of_measurement: 'Hours'
+        icon_template: mdi:timer
+
 
 scene:
   - name: Dinner
@@ -86,38 +129,46 @@ scene:
         state: off
   - name: Lights Out
     entities:
-      group.all_lights:
+      group.away_lights:
         state: off
-      group.all_switches:
+      group.away_switches:
         state: off
-         
+  - name: Good Night
+    entities:
+      input_boolean.good_night:
+        state: on
+  - name: Upstairs Off
+    entities:
+      group.upstairs:
+        state: off
+
 nissan_leaf:
-    username: !secret nissan_username
+    username: "X@EXAMPLE.COM"
     password: !secret nissan_password
-    region: NNA 
-    nissan_connect: true 
-    update_interval: 30 
-    update_interval_charging: 15 
-    update_interval_climate: 5 
+    region: NNA
+    nissan_connect: true
+    update_interval:
+      minutes: 30
+    update_interval_charging:
+      minutes: 15
+    update_interval_climate:
+      minutes: 5
     force_miles: true
 
 notify:
-  - platform: command_line
-    name: 'Bedroom'
-    command: "/config/alexa_wrapper.sh -d 'Bedroom'"
-  - platform: command_line
-    name: 'Basement'
-    command: "/config/alexa_wrapper.sh -d 'Basement'"
-  - platform: command_line
-    name: 'Kitchen'
-    command: "/config/alexa_wrapper.sh -d 'Kitchen Dot'"
-  - platform: command_line
-    name: 'Office'
-    command: "/config/alexa_wrapper.sh -d 'Office'"
+  - platform: alexa_media
+    name: alexa
 
-weather:
-  - platform: darksky
-    api_key: !secret darksky_key
+weblink:
+  entities:
+    - name: Click Here
+      url: /lovelace/0
+      icon: mdi:web
+
+binary_sensor:
+  - platform: workday
+    country: US
+    workdays: [mon, tue, wed, thu, fri]
 
 zwave:
   network_key: !secret zwave_key

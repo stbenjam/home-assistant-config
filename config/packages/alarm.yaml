@@ -1,0 +1,50 @@
+input_datetime:
+  alarm_time:
+    name: Time
+    icon: mdi:clock-outline
+    has_date: false
+    has_time: true
+
+input_boolean:
+  alarm_enabled:
+    name: Alarm
+    icon: mdi:alarm
+
+sensor:
+  - platform: time_date
+    display_options:
+      - 'time'
+      - 'date'
+
+automation:
+  - alias: 'Trigger Alarm'
+    trigger:
+      - platform: template
+        value_template: '{{ states.sensor.time.state == states.input_datetime.alarm_time.state[0:5] }}'
+    condition:
+      condition: state
+      entity_id: input_boolean.alarm_enabled
+      state: 'on'
+    action:
+      - service: script.turn_on
+        data:
+          entity_id: script.alarm_script
+
+script:
+  alarm_script:
+    sequence:
+      - service: cover.set_cover_position
+        data:
+          entity_id: cover.bedroom_shades
+          position: 20
+      - delay:
+          minutes: 5
+      - service: cover.set_cover_position
+        data:
+          entity_id: cover.bedroom_shades
+          position: 40
+      - service: media_player.play_media
+        entity_id: media_player.bedroom
+        data:
+          media_content_id: "Today's Hits"
+          media_content_type: "TUNEIN"

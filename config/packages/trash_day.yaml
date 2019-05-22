@@ -14,6 +14,7 @@ binary_sensor:
     # Trash day
     sensors:
       trash:
+        entity_id: sensor.date
         friendly_name: "Trash Day"
         value_template: >-
           {{ now().weekday() == 3 or now().weekday() == 4 }}
@@ -34,7 +35,6 @@ automation:
     trigger:
       platform: state
       entity_id: binary_sensor.trash
-      from: 'off'
       to: 'on'
     action:
       - service: input_boolean.turn_on
@@ -43,9 +43,7 @@ automation:
   - alias: Trash Day - Notification Thursday 7pm
     trigger:
       platform: time
-      hours: 19
-      minutes: 0
-      seconds: 0
+      at: '19:00:00'
     condition:
       condition: and
       conditions:
@@ -62,9 +60,7 @@ automation:
   - alias: Trash Day - Notification Thursday 9pm
     trigger:
       platform: time
-      hours: 21
-      minutes: 0
-      seconds: 0
+      at: '21:00:00'
     condition:
       condition: and
       conditions:
@@ -81,9 +77,7 @@ automation:
   - alias: Trash Day - Notification Thursday 5:30am
     trigger:
       platform: time
-      hours: 5 
-      minutes: 30
-      seconds: 0
+      at: '05:30:00'
     condition:
       condition: and
       conditions:

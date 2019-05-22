@@ -1,0 +1,84 @@
+sensor:
+  - platform: template
+    sensors:
+      laundry_zooz_battery:
+        friendly_name: "Laundry Room Sensor Battery"
+        unit_of_measurement: "%"
+        value_template: >
+          {% set battery = state_attr('zwave.zooz_zse40_4in1_sensor_5', 'battery_level') %}
+          {{ battery }}
+        icon_template: >
+          {% set battery = state_attr('zwave.zooz_zse40_4in1_sensor_5', 'battery_level') | int %}
+          {% if battery > 90 %}
+            mdi:battery
+          {% elif battery > 80 %}
+            mdi:battery-90
+          {% elif battery > 70 %}
+            mdi:battery-80
+          {% elif battery > 60 %}
+            mdi:battery-70
+          {% elif battery > 50 %}
+            mdi:battery-60
+          {% elif battery > 40 %}
+            mdi:battery-50
+          {% elif battery > 30 %}
+            mdi:battery-40
+          {% else %}
+            mdi:battery-outline
+          {% endif %}
+        entity_id: zwave.zooz_zse40_4in1_sensor_5
+
+binary_sensor:
+  - platform: template
+    sensors:
+      laundry_motion:
+        value_template: "{{ states('sensor.zooz_zse40_4in1_sensor_burglar_4') | int > 0 }}"
+        friendly_name: "Laundry Motion"
+        device_class: motion
+        entity_id: sensor.zooz_zse40_4in1_sensor_burglar_4
+
+automation:
+  - alias: Laundry Pico 1, Button 1
+    trigger:
+      - platform: state
+        entity_id: sensor.laundry_room_pico
+        to: '1'
+    action:
+      - service: switch.turn_on
+        data:
+          entity_id: switch.laundry_room
+
+  - alias: Laundry Pico 1, Button 4
+    trigger:
+      - platform: state
+        entity_id: sensor.laundry_room_pico
+        to: '4'
+    action:
+      - service: switch.turn_off
+        data:
+          entity_id: switch.laundry_room
+
+  - alias: 'Laundry Motion - Light On'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.laundry_motion
+      to: 'on'
+    condition:
+      condition: state
+      entity_id: switch.laundry_room
+      state: 'off'
+    action:
+      service: switch.turn_on
+      entity_id: switch.laundry_room
+
+  - alias: 'Laundry Motion - Light Off'
+    trigger:
+      platform: state
+      entity_id: binary_sensor.laundry_motion
+      to: 'off'
+      for:
+        minutes: 10
+    action:
+      service: switch.turn_off
+      entity_id: switch.laundry_room
+
