@@ -1,4 +1,4 @@
-title: Franklin Pines 
+title: Franklin Pines
 resources:
   - url: /local/slider-entity-row.js
     type: js
@@ -10,38 +10,151 @@ resources:
     type: module
   - url: /local/lovelace-fold-entity-row/fold-entity-row.js
     type: js
+  - url: /local/lovelace-time-input-row/time-input-row.js
+    type: js
+  - url: /local/custom-lovelace/vertical-stack-in-card/vertical-stack-in-card.js
+    type: js
+  - url: /local/power-wheel-card.js
+    type: js
+  - url: /local/card-tools.js
+    type: js
+  - url: /local/secondaryinfo-entity-row.js
+    type: module
 views:
   - icon: mdi:home
+    name: Default
     theme: midnight
     cards:
-      - type: entity-filter
-        show_empty: false
-        entities:
-          - input_boolean.take_out_trash 
-        state_filter: 
-          - on
-        card:
-          type: entities
 
+       ### POWER OUTAGE CARDS ###
+      - type: conditional
+        conditions:
+          - entity: binary_sensor.grid_status
+            state: 'off'
+        card:
+          type: vertical-stack
+          cards:
+            - type: picture-entity
+              image: /local/power-outage.jpg
+              entity: binary_sensor.grid_status
+              show_name: false
+              show_state: false
+            - type: glance
+              entities:
+                - sensor.powerwall_battery
+                - sensor.home_power
+                - sensor.powerwall_power
+     ##########################
+
+      - type: vertical-stack
+        cards:
+          - type: conditional
+            conditions:
+              - entity: input_select.house_mode
+                state: "away"
+            card:
+              type: entities
+              entities:
+                - type: call-service
+                  name: "Are you on your way home?"
+                  icon: mdi:car
+                  action_name: Yes
+                  service: input_select.select_option
+                  service_data:
+                    option: arriving
+                    entity_id: input_select.house_mode
+          - type: glance
+            entities:
+              - entity: sensor.side_door_lock
+                tap_action: call-service
+                hold_action: call-service
+                service: script.turn_on
+                service_data:
+                  entity_id: script.toggle_lock
+                  variables:
+                    lock: lock.schlage_be469_touchscreen_deadbolt_locked
+              - entity: lock.schlage_allegion_be469_touchscreen_deadbolt_locked
+              - entity: sensor.basement_door_lock
+                tap_action: call-service
+                hold_action: call-service
+                service: script.turn_on
+                service_data:
+                  entity_id: script.toggle_lock
+                  variables:
+                    lock: lock.assa_abloy_unknown_type0004_idaa00_locked_3
+              - binary_sensor.doorbell_front
+              - binary_sensor.doorbell_side
+
+          - type: entity-filter
+            show_empty: false
+            entities:
+              - input_boolean.take_out_trash
+            state_filter:
+              - "on"
+            card:
+              type: entities
+          - type: glance
+            entities:
+              - entity: sensor.house_mode
+                hold_action: call-service
+                service: script.turn_on
+                service_data:
+                  entity_id: script.arriving_mode
+            show_name: false
+          - type: conditional
+            conditions:
+              - entity: input_boolean.christmas_season
+                state: "on"
+            card:
+              type: glance
+              entities:
+                - entity: switch.christmas_tree
+                  tap_action: toggle
+                - entity: switch.ge_14284_outdoor_smart_switch_switch
+                  tap_action: toggle
+                - entity: switch.christmas_window
+                  tap_action: toggle
+                  icon: mdi:star-face
+          - type: conditional
+            conditions:
+              - entity: input_boolean.alarm_enabled
+                state: "off"
+            card:
+              type: entities
+              entities:
+                - input_boolean.alarm_enabled
+          - type: conditional
+            conditions:
+              - entity: input_boolean.alarm_enabled
+                state: "on"
+            card:
+              type: entities
+              entities:
+                - input_boolean.alarm_enabled
+                - type: custom:time-input-row
+                  entity: input_datetime.alarm_time
+          - type: custom:thermostat-card
+            entity: climate.thermostat
+            step: 1
+            hvac:
+              states:
+                '0': 'off'
+                '1': 'heat'
+                '2': 'cool'
+              attribute: hvac_state
+          - type: entities
+            entities:
+              - climate.thermostat
+              - input_number.day_temperature
+              - input_number.night_temperature
       - type: vertical-stack
         cards:
           - type: glance
             entities:
-              - sensor.side_door_lock
-              - sensor.front_door_lock
-              - sensor.basement_door_lock
-              - binary_sensor.doorbell_front
-              - binary_sensor.doorbell_side
-          - type: entity-filter
-            show_empty: false
-            entities:
-              - input_boolean.is_away
-              - input_boolean.night_mode
-            state_filter:
-              - on
-            card:
-              type: glance
-              show_state: false
+              - sensor.hallway_nest_protect_color_status
+              - sensor.master_bedroom_nest_protect_color_status
+              - sensor.basement_nest_protect_color_status_2
+              - binary_sensor.basement_water_heater_sensor
           - type: entity-filter
             show_empty: false
             entities:
@@ -53,44 +166,62 @@ views:
               - device_tracker.ajsiphone
               - device_tracker.iphone2
               - device_tracker.susana
-            state_filter: 
+              - device_tracker.lidia_iphone
+              - device_tracker.iphone_2
+            state_filter:
               - home
             card:
               type: glance
-          - type: custom:thermostat-card
-            entity: climate.hallway
-            step: 1
-            hvac:
-              states:
-                'off': 'off'
-                'cooling': 'cool'
-                'heating': 'heat'
-              sensor:
-                sensor: sensor.hallway_thermostat_hvac_state
-          - type: entities
-            entities:
-              - climate.hallway
-              - input_number.day_temperature
-              - input_number.night_temperature
-      - type: vertical-stack
-        cards: 
-          - type: glance
-            entities:
-             - binary_sensor.grid_status
-             - sensor.powerwall_battery
-             - sensor.home_power
-             - sensor.solar_live
+              show_state: false
+
           - type: weather-forecast
             entity: weather.dark_sky
+          - type: custom:vertical-stack-in-card
+            show_header_toggle: false
+            cards:
+              - type: markdown
+                content: "## Allergy Report"
+              - type: horizontal-stack
+                cards:
+                  - type: gauge
+                    entity: sensor.allergy_index_today
+                    min: 0
+                    max: 12
+                    unit: " "
+                    name: Today
+                    severity:
+                      green: 0
+                      yellow: 4
+                      red: 8
+                  - type: gauge
+                    name: Tomorrow
+                    entity: sensor.allergy_index_tomorrow
+                    min: 0
+                    max: 12
+                    unit: " "
+                    severity:
+                      green: 0
+                      yellow: 4
+                      red: 8
+                  - type: gauge
+                    name: 5 Day
+                    entity: sensor.allergy_index_forecasted_average
+                    min: 0
+                    max: 12
+                    unit: " "
+                    severity:
+                      green: 0
+                      yellow: 4
+                      red: 8
           - type: picture-entity
-            title: Radar 
-            entity: camera.radar 
-            camera_image: camera.radar 
+            title: Radar
+            entity: camera.radar
+            camera_image: camera.radar
             show_state: false
             show_name: false
             tap_action: dialog
-            
-  - title: Rooms
+
+  - title: Upstairs
     cards:
       - type: vertical-stack
         cards:
@@ -102,72 +233,97 @@ views:
                 service: scene.turn_on
                 service_data:
                   entity_id: scene.dinner
+              - entity: scene.upstairs_off
+                tap_action: call-service
+                service: scene.turn_on
+                service_data:
+                  entity_id: scene.upstairs_off
+                icon: mdi:stairs
               - entity: scene.lights_out
                 tap_action: call-service
                 service: scene.turn_on
                 service_data:
                   entity_id: scene.lights_out
-          - type: entities
+              - entity: scene.good_night
+                tap_action: call-service
+                service: scene.turn_on
+                service_data:
+                  entity_id: scene.good_night
+                icon: mdi:weather-night
+          - type: custom:vertical-stack-in-card
             title: Kitchen & Dining Room
             show_header_toggle: false
-            entities:
-              - lock.schlage_be469_touchscreen_deadbolt_locked
-              - entity: light.kitchen_main_lights
-                type: custom:slider-entity-row
-              - entity: light.dining_room_main_lights
-                type: custom:slider-entity-row
-              - type: custom:fold-entity-row
-                head: sensor.zooz_zse40_4in1_sensor_temperature_3
-                items:
+            cards:
+              - type: glance
+                show_name: false
+                entities:
                   - binary_sensor.kitchen_motion
+                  - sensor.zooz_zse40_4in1_sensor_temperature_3
                   - sensor.zooz_zse40_4in1_sensor_relative_humidity_3
                   - sensor.zooz_zse40_4in1_sensor_luminance_3
+              - type: entities
+                entities:
+                - lock.schlage_be469_touchscreen_deadbolt_locked
+                - entity: light.kitchen_main_lights
+                  type: custom:slider-entity-row
+                - entity: light.dining_room_main_lights
+                  type: custom:slider-entity-row
           - type: entities
             title: Living Room
             entities:
-              - lock.assa_abloy_unknown_type0004_idaa00_locked
+              - lock.schlage_allegion_be469_touchscreen_deadbolt_locked
+              - switch.living_room_tv
               - entity: light.living_room_floor_lamp
                 type: custom:slider-entity-row
               - entity: light.hue_go_1
                 type: custom:slider-entity-row
-          - type: entities
-            title: Basement
-            show_header_toggle: false
-            entities:
-              - lock.assa_abloy_unknown_type0004_idaa00_locked_3
-              - input_boolean.basement_tv
-              - entity: light.stairs
-                type: custom:slider-entity-row
-              - entity: light.la_luna
-                type: custom:slider-entity-row
       - type: vertical-stack
         cards:
           - type: entities
-            title: Hallway
-            entities:
-              - entity: light.hallway_main_lights
-                type: custom:slider-entity-row
-          - type: entities
+            title: Master Bedroom
             show_header_toggle: false
-            title: Bathroom
             entities:
-              - entity: light.main_bathroom_vanity_lights
-                type: custom:slider-entity-row
-              - switch.main_bathroom_exhaust_fan
+              - input_select.bedroom_scene
               - type: custom:fold-entity-row
-                head: binary_sensor.bathroom_occupied
+                head:
+                  type: custom:slider-entity-row
+                  entity: light.bedroom
                 items:
+                  - entity: light.br1
+                    type: custom:slider-entity-row
+                  - entity: light.br2
+                    type: custom:slider-entity-row
+                  - entity: light.br3
+                    type: custom:slider-entity-row
+              - type: custom:fold-entity-row
+                head:
+                  type: "custom:secondaryinfo-entity-row"
+                  entity: cover.bedroom_shades
+                  secondary_info: "[[ cover.bedroom_shades.state ]]"
+                items:
+                  - cover.master_bedroom_front
+                  - cover.master_bedroom_left
+              - switch.new_york
+              - switch.air_filter
+              - switch.white_noise_machine
+          - type: custom:vertical-stack-in-card
+            title: Bathroom
+            show_header_toggle: false
+            cards:
+              - type: glance
+                show_name: false
+                entities:
                   - binary_sensor.bathroom_motion
                   - binary_sensor.shower_on
                   - sensor.zooz_zse40_4in1_sensor_relative_humidity_2
                   - sensor.zooz_zse40_4in1_sensor_temperature_2
-          - type: entities
-            title: Bedroom
-            entities:
-              - entity: light.bedroom
-                type: custom:slider-entity-row
-              - switch.new_york
-              - switch.air_filter
+                  - sensor.zooz_zse40_4in1_sensor_luminance_2
+              - type: entities
+                show_header_toggle: false
+                entities:
+                  - entity: light.main_bathroom_vanity_lights
+                    type: custom:slider-entity-row
+                  - switch.main_bathroom_exhaust_fan
       - type: vertical-stack
         cards:
           - type: entities
@@ -178,8 +334,97 @@ views:
                 type: custom:slider-entity-row
               - entity: light.sunroom_lamp
                 type: custom:slider-entity-row
-              - type: custom:toggle-lock-entity-row
-                entity: switch.sunroom_heater
+          - type: entities
+            title: Office
+            show_header_toggle: false
+            entities:
+              - entity: light.office_floor_lamp
+                type: custom:slider-entity-row
+              - switch.desktop_computer
+          - type: entities
+            title: Guest Bedroom
+            show_header_toggle: false
+            entities:
+              - type: custom:fold-entity-row
+                head:
+                  type: custom:slider-entity-row
+                  entity: light.guest_room
+                items:
+                  - entity: light.guest_room_upper
+                    type: custom:slider-entity-row
+                  - entity: light.guest_room_lower
+                    type: custom:slider-entity-row
+          - type: entities
+            title: Hallway
+            entities:
+              - entity: light.hallway_main_lights
+                type: custom:slider-entity-row
+  - title: Basement
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: entities
+            title: TV Room
+            show_header_toggle: false
+            entities:
+              - lock.assa_abloy_unknown_type0004_idaa00_locked_3
+              - switch.basement_tv
+              - entity: light.stairs
+                type: custom:slider-entity-row
+              - entity: light.la_luna
+                type: custom:slider-entity-row
+          - type: custom:vertical-stack-in-card
+            title: Laundry Room
+            show_header_toggle: false
+            cards:
+              - type: glance
+                show_name: false
+                entities:
+                  - binary_sensor.laundry_motion
+                  - sensor.zooz_zse40_4in1_sensor_temperature_4
+                  - sensor.zooz_zse40_4in1_sensor_relative_humidity_4
+                  - sensor.zooz_zse40_4in1_sensor_luminance_4
+              - type: entities
+                show_header_toggle: false
+                entities:
+                  - switch.laundry_room
+      - type: glance
+        title: Utility Room
+        show_name: false
+        entities:
+            - sensor.aeotec_zw122_water_sensor_6_temperature
+  - title: Exterior
+    cards:
+      - type: glance
+        entities:
+          - entity: sensor.side_door_lock
+            tap_action: call-service
+            hold_action: call-service
+            service: script.turn_on
+            service_data:
+              entity_id: script.toggle_lock
+              variables:
+                lock: lock.schlage_be469_touchscreen_deadbolt_locked
+          - entity: sensor.front_door_lock
+            tap_action: call-service
+            hold_action: call-service
+            service: script.turn_on
+            service_data:
+              entity_id: script.toggle_lock
+              variables:
+                lock: lock.schlage_allegion_be469_touchscreen_deadbolt_locked
+          - entity: sensor.basement_door_lock
+            tap_action: call-service
+            hold_action: call-service
+            service: script.turn_on
+            service_data:
+              entity_id: script.toggle_lock
+              variables:
+                lock: lock.assa_abloy_unknown_type0004_idaa00_locked_3
+          - binary_sensor.doorbell_front
+          - binary_sensor.doorbell_side
+      - type: vertical-stack
+        cards:
           - type: entities
             title: Exterior
             entities:
@@ -187,45 +432,48 @@ views:
               - switch.rear_deck_deck_lights
               - switch.front_porch_overhead_light
               - light.front_door_light
+          - type: conditional
+            conditions:
+              - entity: input_boolean.christmas_season
+                state: "on"
+            card:
+              type: entities
+              entities:
+                - entity: scene.christmas
+                  icon: mdi:home-circle
+                - type: divider
+                  style:
+                    height: 1px
+                    width: 80%
+                    background-color: 'var(--secondary-background-color)'
+                    margin-left: auto
+                    margin-right: auto
+
+                - switch.christmas_tree
+                - switch.ge_14284_outdoor_smart_switch_switch
+                - switch.christmas_window
+
       - type: entities
-        title: Office
         entities:
-          - entity: light.office_floor_lamp
-            type: custom:slider-entity-row
-  - title: Security
-    cards:
-      - type: custom:monster-card
-        card:
-          type: glance
-          title: Motion
-        filter:
-          include:
-            - entity_id: binary_sensor.*_motion
-      - type: glance
-        title: Safety 
-        entities:
-          - sensor.hallway_nest_protect_color_status
-          - sensor.master_bedroom_nest_protect_color_status
-          - sensor.basement_nest_protect_color_status
-          - binary_sensor.basement_water_heater_sensor
-      - type: glance
-        title: Doors
-        entities:
-          - sensor.front_door_lock
-          - sensor.side_door_lock
-          - sensor.basement_door_lock
-          - binary_sensor.doorbell_front
-          - binary_sensor.doorbell_side
-      - type: picture-entity
-        title: Front 
+          - input_boolean.camera_alerts
+      - type: picture-glance
+        title: Front
         entity: camera.front
         camera_image: camera.front
+        camera_view: live
         show_state: false
-      - type: picture-entity
-        title: Rear 
-        entity: camera.rear 
-        camera_image: camera.rear 
+        entities:
+          - camera.front_event
+          - binary_sensor.front_person_detected
+      - type: picture-glance
+        title: Rear
+        entity: camera.rear
+        camera_view: live
+        camera_image: camera.rear
         show_state: false
+        entities:
+          - camera.rear_event
+          - binary_sensor.rear_person_detected
   - title: Energy
     cards:
       - type: vertical-stack
@@ -234,29 +482,21 @@ views:
             entities:
               - entity: binary_sensor.grid_status
                 name: Electrical Grid
-          - type: gauge
-            title: Powerwall
-            entity: sensor.powerwall_battery
-          - type: sensor
-            entity: sensor.powerwall_power
-            line_color: green
-      - type: vertical-stack
-        cards:
+          - type: glance
+            show_header_toggle: false
+            entities:
+              - sun.sun
+              - sensor.sunrise
+              - sensor.sunset
+              - sensor.season
           - type: horizontal-stack
             cards:
+              - type: gauge
+                title: Powerwall
+                entity: sensor.powerwall_battery
               - type: sensor
-                entity: sensor.home_power
-                line_color: teal
-              - type: sensor
-                entity: sensor.home_energy_consumption
-                name: Home Usage
-                graph: none
-          - type: sensor
-            entity: sensor.solar_power
-            line_color: yellow
-          - type: sensor
-            entity: sensor.grid_power
-            line_color: grey
+                entity: sensor.powerwall_power
+                line_color: green
           - type: glance
             title: UPS
             entities:
@@ -270,47 +510,79 @@ views:
           - type: horizontal-stack
             cards:
               - type: sensor
+                entity: sensor.solar_power
+              - type: sensor
+                entity: sensor.solar_today
+          - type: glance
+            show_header_toggle: false
+            entities:
+              - entity: sensor.lifetime_generation
+                name: Lifetime
+              - entity: sensor.connected_optimizers
+                name: Optimizers
+              - entity: sensor.solar_max
+                name: Solar Peak Today
+              - sensor.solar_month
+          - type: horizontal-stack
+            cards:
+              - type: custom:vertical-stack-in-card
+                cards:
+                  - type: sensor
+                    entity: sensor.home_power
+                    graph: line
+                  - type: entities
+                    show_header_toggle: false
+                    entities:
+                      - entity: sensor.home_usage_daily
+                        name: Today
+                      - entity: sensor.home_usage_monthly
+                        name: Month
+                      - entity: sensor.home_usage_yearly
+                        name: Year
+              - type: custom:vertical-stack-in-card
+                cards:
+                  - type: sensor
+                    entity: sensor.grid_power
+                    graph: line
+                  - type: entities
+                    show_header_toggle: false
+                    entities:
+                      - entity: sensor.grid_daily
+                        name: Today
+                      - entity: sensor.grid_monthly
+                        name: Month
+                      - entity: sensor.grid_yearly
+                        name: Year
+      - type: vertical-stack
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: sensor
                 entity: sensor.leaf_charge
                 graph: none
               - type: sensor
                 entity: sensor.leaf_range
                 graph: none
               - type: sensor
-                name: Range (AC)
                 graph: none
-                entity: sensor.leaf_range_ac
+                entity: sensor.leaf_charge_time
           - type: picture-glance
             title: Leaf
             show_header_toggle: false
             entities:
               - binary_sensor.leaf_plug_status
-              - switch.leaf_charging_status
+              - binary_sensor.leaf_charging_status
               - switch.leaf_climate_control
             image: /local/leaf.jpg
-          - type: entities
-            title: Sun 
-            entities:
-              - sun.sun
-              - sensor.sunrise
-              - sensor.sunset
-              - sensor.season
-      - type: entities
-        title: Solar
-        entities:
-          - sensor.lifetime_generation
-          - sensor.connected_optimizers
-          - sensor.solar_max
-          - sensor.solar_today
-          - sensor.solar_month
+
   - title: Advanced
     cards:
       - type: entities
         title: Misc
         show_header_toggle: false
         entities:
-          - input_boolean.is_away
-          - input_boolean.guest_mode
-          - input_boolean.night_mode
+          - input_select.house_mode
+          - input_boolean.christmas_season
       - type: entities
         title: Batteries
         entities:
@@ -319,12 +591,13 @@ views:
           - sensor.side_door_lock_battery
           - sensor.side_doorbell_battery
           - sensor.basement_door_lock_battery
-          - sensor.basement_nest_protect_battery_health
+          - sensor.basement_nest_protect_battery_health_2
           - sensor.hallway_nest_protect_battery_health
           - sensor.master_bedroom_nest_protect_battery_health
           - sensor.kitchen_zooz_battery
           - sensor.bathroom_zooz_battery
           - sensor.basement_water_sensor_battery
+          - sensor.laundry_zooz_battery
       - type: custom:monster-card
         card:
           type: entities
